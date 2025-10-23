@@ -21,4 +21,9 @@ class SabpaisaOrder extends Model
         'refund_amount',
         'refund_response',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(SabpaisaUser::class, 'user_id');
+    }
 }

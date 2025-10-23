@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Classes\SabpaisaAuth;
 use App\Http\Requests\SabpaisaRequest;
 use App\Models\SabpaisaOrder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class SabpaisaController extends Controller
 {
@@ -38,7 +41,134 @@ class SabpaisaController extends Controller
         return view('sabpaisa.request', compact('input', 'clientCode'));
     }
 
-    public function status() {}
+    public function status(Request $request)
+    {
+        $userId = config('services.sabpaisa.user.id');
 
-    public function callback() {}
+        $input = $request->validate([
+            'order_id' => ['required', 'string', Rule::exists('sabpaisa_orders', 'order_id')->where('user_id', $userId)],
+        ]);
+
+        $order = SabpaisaOrder::where('user_id', $userId)
+            ->where('order_id', $input['order_id'])
+            ->first();
+
+        return response()->json([
+            'order_id' => $order->order_id,
+            'amount' => $order->amount,
+            'status' => $order->status,
+            'payer_name' => $order->payer_name,
+            'payer_email' => $order->payer_email,
+            'payer_mobile' => $order->payer_mobile,
+        ]);
+    }
+
+    public function callback(Request $request, SabpaisaAuth $sabpaisaAuth)
+    {
+        $input = $request->all();
+
+        if (isset($input['encResponse'])) {
+
+            $authKey = sabpaisa('auth_key');
+            $authIV = sabpaisa('auth_iv');
+
+            $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $input['encResponse']);
+
+            $token = strtok($decText, "&");
+
+            $i = 0;
+
+            while ($token !== false) {
+                $i = $i + 1;
+                $token1 = strchr($token, "=");
+                $token = strtok("&");
+                $fstr = ltrim($token1, "=");
+
+                if ($i == 4) {
+                    $clientTxnId = $fstr;
+                }
+
+                if ($i == 12) {
+                    $status = $fstr;
+                }
+            }
+
+            SabpaisaOrder::where('order_id', $clientTxnId)->update([
+                'status' => in_array(strtolower($status), ['success', 'paid']) ? 'completed' : 'failed',
+                'request_response' => $decText,
+            ]);
+
+            $order = SabpaisaOrder::with('user')->where('order_id', $clientTxnId)->first();
+
+            if (in_array(strtolower($status), ['success', 'paid'])) {
+                $sendData = json_encode([
+                    'order_id' => $order->order_id,
+                    'amount' => $order->amount,
+                    'status' => 'completed'
+                ]);
+            } else {
+                $sendData = json_encode([
+                    'order_id' => $order->order_id,
+                    'amount' => $order->amount,
+                    'status' => 'failed'
+                ]);
+            }
+
+            $backUrl = "{$order->user->callback_url}?response={$sendData}";
+
+            return redirect()->to($backUrl);
+        }
+
+        return response()->json([
+            'error' => 'Payment failed or cancelled',
+            'message' => 'Unable to process payment',
+        ], 402);
+    }
+
+    public function webhook(Request $request, SabpaisaAuth $sabpaisaAuth)
+    {
+        $data = $request->input('encData');
+
+        $authKey = sabpaisa('auth_key');
+        $authIV = sabpaisa('auth_iv');
+
+        $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $data);
+
+        $token = strtok($decText, "&");
+
+        $i = 0;
+
+        while ($token !== false) {
+            $i = $i + 1;
+            $token1 = strchr($token, "=");
+            $token = strtok("&");
+            $fstr = ltrim($token1, "=");
+
+            if ($i == 4) {
+                $clientTxnId = $fstr;
+            }
+
+            if ($i == 12) {
+                $status = $fstr;
+            }
+        }
+
+        SabpaisaOrder::where('order_id', $clientTxnId)->update([
+            'status' => in_array(strtolower($status), ['success', 'paid']) ? 'completed' : 'failed',
+            'request_response' => $decText,
+        ]);
+
+        $order = SabpaisaOrder::with('user')->where('order_id', $clientTxnId)->first();
+
+        if ($order->user->notify_url != null) {
+
+            Http::post($order->user->notify_url, [
+                'order_id' => $order->order_id,
+                'amount' => $order->amount,
+                'status' => in_array(strtolower($status), ['success', 'paid']) ? 'completed' : 'failed'
+            ]);
+        }
+
+        return response('OK', 200);
+    }
 }
