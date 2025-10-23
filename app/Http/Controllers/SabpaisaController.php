@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Classes\SabpaisaAuth;
 use App\Http\Requests\SabpaisaRequest;
 use App\Models\SabpaisaOrder;
-use Illuminate\Http\Request;
 
 class SabpaisaController extends Controller
 {
-    public function request(SabpaisaRequest $request)
+    public function request(SabpaisaRequest $request, SabpaisaAuth $sabpaisaAuth)
     {
         $input = $request->validated();
 
@@ -32,8 +31,6 @@ class SabpaisaController extends Controller
             "&payerName=" . $input['payer_name'] . "&payerMobile=" . $input['payer_mobile'] . "&payerEmail=" . $input['payer_email'] . "&clientTxnId=" . $input['order_id'] . "&amount=" . $input['amount'] . "&amountType=" . $input['currency'] . "&mcc=" . $input['mcc'] . "&channelId=" . $input['channel_id'] .
             "&callbackUrl=" . $input['callback_url'] . "&udf1=" . $input['class'] . "&udf2=" . $input['roll'];
 
-        $sabpaisaAuth = new SabpaisaAuth();
-
         $data = $sabpaisaAuth->encrypt($authKey, $authIV, $input['enc_data']);
 
         SabpaisaOrder::create($input);
@@ -41,13 +38,7 @@ class SabpaisaController extends Controller
         return view('sabpaisa.request', compact('input', 'clientCode'));
     }
 
-    public function status()
-    {
-        
-    }
+    public function status() {}
 
-    public function callback()
-    {
-        
-    }
+    public function callback() {}
 }
