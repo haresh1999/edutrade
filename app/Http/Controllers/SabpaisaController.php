@@ -27,11 +27,11 @@ class SabpaisaController extends Controller
         $authKey = sabpaisa('auth_key');
         $authIV = sabpaisa('auth_iv');
 
-        $input['enc_data'] = "?clientCode=" . $clientCode . "&transUserName=" . $username . "&transUserPassword=" . $password .
+        $encData = "?clientCode=" . $clientCode . "&transUserName=" . $username . "&transUserPassword=" . $password .
             "&payerName=" . $input['payer_name'] . "&payerMobile=" . $input['payer_mobile'] . "&payerEmail=" . $input['payer_email'] . "&clientTxnId=" . $input['order_id'] . "&amount=" . $input['amount'] . "&amountType=" . $input['currency'] . "&mcc=" . $input['mcc'] . "&channelId=" . $input['channel_id'] .
             "&callbackUrl=" . $input['callback_url'] . "&udf1=" . $input['class'] . "&udf2=" . $input['roll'];
 
-        $data = $sabpaisaAuth->encrypt($authKey, $authIV, $input['enc_data']);
+        $input['enc_data'] = $sabpaisaAuth->encrypt($authKey, $authIV, $encData);
 
         SabpaisaOrder::create($input);
 
