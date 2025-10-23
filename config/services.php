@@ -35,7 +35,7 @@ return [
         ],
     ],
 
-    'subpaisa' => [
+    'sabpaisa' => [
         'sandbox' => [
             'client_code' => 'DCRBP',
             'username' => 'userph.jha_3036',

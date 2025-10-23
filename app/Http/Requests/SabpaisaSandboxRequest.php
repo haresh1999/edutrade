@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class SabpaisaRequest extends FormRequest
+class SabpaisaSandboxRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,7 +23,7 @@ class SabpaisaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['required', 'string', 'max:255', Rule::unique('sabpaisa_orders', 'order_id')->where('user_id', config('services.sabpaisa.user.id'))],
+            'order_id' => ['required', 'string', 'max:255', Rule::unique('sabpaisa_sandbox_orders', 'order_id')->where('user_id', config('services.subpaisa.user.id'))],
             'amount' => ['required', 'numeric', 'min:1'],
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],

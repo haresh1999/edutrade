@@ -14,7 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'subpaisa' => SabpaisaMiddleware::class,
-        ]);
+        ])->validateCsrfTokens(except: [
+            'sabpaisa/*',
+        ]);;
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -6,5 +6,5 @@
 <script>
     setTimeout(() => {
         document.getElementById('payment-form').submit();
-    }, 2000);
+    }, 1000);
 </script>

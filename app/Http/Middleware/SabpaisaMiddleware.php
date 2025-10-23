@@ -16,8 +16,8 @@ class SabpaisaMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $clientId = $request->header('client_id');
-        $clientSecret = $request->header('client_secret');
+        $clientId = $request->get('client_id');
+        $clientSecret = $request->get('client_secret');
         $is_sandbox = str_contains(url()->current(), 'sandbox');
 
         $user = SabpaisaUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret) {
@@ -34,7 +34,7 @@ class SabpaisaMiddleware
             ], 401);
         }
 
-        config(['services.subpaisa.user' => $user->toArray()]);
+        config(['services.sabpaisa.user' => $user->toArray()]);
 
         return $next($request);
     }
