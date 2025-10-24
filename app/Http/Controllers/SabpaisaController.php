@@ -66,7 +66,7 @@ class SabpaisaController extends Controller
 
         return response()->json([
             'order_id' => $order->order_id,
-            'tnx_id' => $order->txn_id,
+            'tnx_id' => $order->tnx_id,
             'amount' => $order->amount,
             'status' => $order->status,
             'payer_name' => $order->payer_name,
@@ -114,7 +114,7 @@ class SabpaisaController extends Controller
 
             $sendData = json_encode([
                 'order_id' => $order->order_id,
-                'tnx_id' => $order->txn_id,
+                'tnx_id' => $order->tnx_id,
                 'amount' => $order->amount,
                 'status' => $order->status
             ]);
@@ -170,7 +170,7 @@ class SabpaisaController extends Controller
             Http::post($order->user->notify_url, [
                 'order_id' => $order->order_id,
                 'amount' => $order->amount,
-                'tnx_id' => $order->txn_id,
+                'tnx_id' => $order->tnx_id,
                 'status' => in_array(strtolower($status), ['success', 'paid']) ? 'completed' : 'failed'
             ]);
         }

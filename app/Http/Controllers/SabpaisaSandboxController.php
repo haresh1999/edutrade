@@ -85,7 +85,7 @@ class SabpaisaSandboxController extends Controller
 
             $sendData = json_encode([
                 'order_id' => $order->order_id,
-                'tnx_id' => $order->txn_id,
+                'tnx_id' => $order->tnx_id,
                 'amount' => $order->amount,
                 'status' => $order->status
             ]);
@@ -125,7 +125,7 @@ class SabpaisaSandboxController extends Controller
 
         return response()->json([
             'order_id' => $order->order_id,
-            'tnx_id' => $order->txn_id,
+            'tnx_id' => $order->tnx_id,
             'amount' => $order->amount,
             'status' => $order->status,
             'payer_name' => $order->payer_name,
