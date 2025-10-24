@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class SabpaisaSandboxOrder extends Model
+class RazorpayOrder extends Model
 {
     use SoftDeletes;
 
@@ -36,6 +36,6 @@ class SabpaisaSandboxOrder extends Model
 
     public function user()
     {
-        return $this->belongsTo(SabpaisaUser::class, 'user_id');
+        return $this->belongsTo(RazorpayUser::class, 'user_id');
     }
 }

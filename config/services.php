@@ -36,6 +36,7 @@ return [
     ],
 
     'sabpaisa' => [
+        'user' => [],
         'sandbox' => [
             'client_code' => 'DCRBP',
             'username' => 'userph.jha_3036',
@@ -44,7 +45,6 @@ return [
             'auth_iv' => 'C28LAmGxXTqmK0QJ',
             'url' => 'https://stage-securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1'
         ],
-
         'production' => [
             'client_code' => 'SHA9I6',
             'username' => 'ikondubai@gmail.com',
@@ -53,7 +53,17 @@ return [
             'auth_iv' => '0Op4vCNftDe4i0OwdOfP99BW2qz8KCfOzyXz66VWL4L2q50/uzB2ygpF6Xq+2Vea',
             'url' => 'https://securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1'
         ],
-
-        'user' => []
     ],
+
+    'razorpay' => [
+        'user' => [],
+        'sandbox' => [
+            'key_id' => 'rzp_test_RXE0uWen59xOZ0',
+            'key_secret' => 'PRq5jSWVM7VvKc5fqEdaqhWn'
+        ],
+        'production' => [
+            'key_id' => 'rzp_live_RTIzeZS7Q22shx',
+            'key_secret' => 'nca3Agw8XlpW95Hfmp4et4al'
+        ],
+    ]
 ];

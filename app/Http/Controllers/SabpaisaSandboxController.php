@@ -7,6 +7,8 @@ use App\Classes\SabpaisaAuthSandbox;
 use App\Http\Requests\SabpaisaSandboxRequest;
 use App\Models\SabpaisaSandboxOrder;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class SabpaisaSandboxController extends Controller
 {
@@ -17,7 +19,7 @@ class SabpaisaSandboxController extends Controller
         $input['currency'] = 'INR';
         $input['mcc'] = 5137;
         $input['channel_id'] = 'W';
-        $input['callback_url'] = 'https://edutrade.in/payment/sabpaisa/response.php';
+        $input['callback_url'] = env('SABPAISA_SANDBOX_CALLBACK_URL');
         $input['class'] = 'VIII';
         $input['roll'] = '1008';
         $input['url'] = sabpaisaSandbox('url');
@@ -46,8 +48,8 @@ class SabpaisaSandboxController extends Controller
 
         if (isset($input['encResponse'])) {
 
-            $authKey = sabpaisa('auth_key');
-            $authIV = sabpaisa('auth_iv');
+            $authKey = sabpaisaSandbox('auth_key');
+            $authIV = sabpaisaSandbox('auth_iv');
 
             $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $input['encResponse']);
 
@@ -77,19 +79,12 @@ class SabpaisaSandboxController extends Controller
 
             $order = SabpaisaSandboxOrder::with('user')->where('order_id', $clientTxnId)->first();
 
-            if (in_array(strtolower($status), ['success', 'paid'])) {
-                $sendData = json_encode([
-                    'order_id' => $order->order_id,
-                    'amount' => $order->amount,
-                    'status' => 'completed'
-                ]);
-            } else {
-                $sendData = json_encode([
-                    'order_id' => $order->order_id,
-                    'amount' => $order->amount,
-                    'status' => 'failed'
-                ]);
-            }
+            $sendData = json_encode([
+                'order_id' => $order->order_id,
+                'tnx_id' => $order->txn_id,
+                'amount' => $order->amount,
+                'status' => $order->status
+            ]);
 
             $backUrl = "{$order->user->callback_url}?response={$sendData}";
 
@@ -102,12 +97,45 @@ class SabpaisaSandboxController extends Controller
         ], 402);
     }
 
+    public function status(Request $request)
+    {
+        $userId = config('services.sabpaisa.user.id');
+
+        $validator = Validator::make($request->all(), [
+            'tnx_id' => ['required', 'string', Rule::exists('sabpaisa_sandbox_orders', 'tnx_id')->where('user_id', $userId)],
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $input = $validator->validated();
+
+        $order = SabpaisaSandboxOrder::where('user_id', $userId)
+            ->where('tnx_id', $input['tnx_id'])
+            ->first();
+
+        return response()->json([
+            'order_id' => $order->order_id,
+            'tnx_id' => $order->txn_id,
+            'amount' => $order->amount,
+            'status' => $order->status,
+            'payer_name' => $order->payer_name,
+            'payer_email' => $order->payer_email,
+            'payer_mobile' => $order->payer_mobile,
+        ]);
+    }
+
     public function webhook(Request $request, SabpaisaAuthSandbox $sabpaisaAuth)
     {
         $data = $request->input('encData');
 
-        $authKey = sabpaisa('auth_key');
-        $authIV = sabpaisa('auth_iv');
+        $authKey = sabpaisaSandbox('auth_key');
+        $authIV = sabpaisaSandbox('auth_iv');
 
         $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $data);
 

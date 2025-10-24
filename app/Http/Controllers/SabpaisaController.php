@@ -7,6 +7,7 @@ use App\Http\Requests\SabpaisaRequest;
 use App\Models\SabpaisaOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class SabpaisaController extends Controller
@@ -18,7 +19,7 @@ class SabpaisaController extends Controller
         $input['currency'] = 'INR';
         $input['mcc'] = 5137;
         $input['channel_id'] = 'W';
-        $input['callback_url'] = 'https://edutrade.in/payment/sabpaisa/callback';
+        $input['callback_url'] = env('SABPAISA_CALLBACK_URL');
         $input['class'] = 'VIII';
         $input['roll'] = '1008';
         $input['url'] = sabpaisa('url');
@@ -45,16 +46,27 @@ class SabpaisaController extends Controller
     {
         $userId = config('services.sabpaisa.user.id');
 
-        $input = $request->validate([
-            'order_id' => ['required', 'string', Rule::exists('sabpaisa_orders', 'order_id')->where('user_id', $userId)],
+        $validator = Validator::make($request->all(), [
+            'tnx_id' => ['required', 'string', Rule::exists('sabpaisa_orders', 'tnx_id')->where('user_id', $userId)],
         ]);
 
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $input = $validator->validated();
+
         $order = SabpaisaOrder::where('user_id', $userId)
-            ->where('order_id', $input['order_id'])
+            ->where('tnx_id', $input['tnx_id'])
             ->first();
 
         return response()->json([
             'order_id' => $order->order_id,
+            'tnx_id' => $order->txn_id,
             'amount' => $order->amount,
             'status' => $order->status,
             'payer_name' => $order->payer_name,
@@ -100,19 +112,12 @@ class SabpaisaController extends Controller
 
             $order = SabpaisaOrder::with('user')->where('order_id', $clientTxnId)->first();
 
-            if (in_array(strtolower($status), ['success', 'paid'])) {
-                $sendData = json_encode([
-                    'order_id' => $order->order_id,
-                    'amount' => $order->amount,
-                    'status' => 'completed'
-                ]);
-            } else {
-                $sendData = json_encode([
-                    'order_id' => $order->order_id,
-                    'amount' => $order->amount,
-                    'status' => 'failed'
-                ]);
-            }
+            $sendData = json_encode([
+                'order_id' => $order->order_id,
+                'tnx_id' => $order->txn_id,
+                'amount' => $order->amount,
+                'status' => $order->status
+            ]);
 
             $backUrl = "{$order->user->callback_url}?response={$sendData}";
 
@@ -165,6 +170,7 @@ class SabpaisaController extends Controller
             Http::post($order->user->notify_url, [
                 'order_id' => $order->order_id,
                 'amount' => $order->amount,
+                'tnx_id' => $order->txn_id,
                 'status' => in_array(strtolower($status), ['success', 'paid']) ? 'completed' : 'failed'
             ]);
         }

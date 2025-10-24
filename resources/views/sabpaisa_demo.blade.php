@@ -7,6 +7,9 @@
     <title>Sabpaisa Payment Request</title>
 </head>
 <body>
+
+    <h1>Sandbox Payment</h1>
+
     <form action="{{ url('/sabpaisa/sandbox/request') }}" method="post">
         <input type="text" name="client_id" value="edutrade">
         <input type="text" name="client_secret" value="1890b383-345a-42d3-88c7-6e80efd08460">
@@ -19,6 +22,8 @@
     </form>
 
     {{-- Live --}}
+
+    <h1>Live Payment</h1>
 
     <form action="{{ url('/sabpaisa/request') }}" method="post">
         <input type="text" name="client_id" value="edutrade">

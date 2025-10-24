@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('order_id');
+            $table->uuid('tnx_id')->unique();
             $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'refunded'])->default('pending');
             $table->string('payer_name');

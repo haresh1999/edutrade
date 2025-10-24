@@ -12,6 +12,7 @@ class SabpaisaOrder extends Model
     protected $fillable = [
         'user_id',
         'order_id',
+        'tnx_id',
         'amount',
         'status',
         'payer_name',
@@ -21,6 +22,17 @@ class SabpaisaOrder extends Model
         'refund_amount',
         'refund_response',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->tnx_id = (string) str()->uuid();
+            }
+        });
+    }
 
     public function user()
     {

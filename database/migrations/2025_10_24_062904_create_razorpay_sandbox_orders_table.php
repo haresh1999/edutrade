@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sabpaisa_orders', function (Blueprint $table) {
+        Schema::create('razorpay_sandbox_orders', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('order_id');
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['user_id', 'order_id']);
-            $table->foreign('user_id')->references('id')->on('sabpaisa_users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('razorpay_users')->onDelete('cascade');
         });
     }
 
@@ -36,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sabpaisa_orders');
+        Schema::dropIfExists('razorpay_sandbox_orders');
     }
 };
