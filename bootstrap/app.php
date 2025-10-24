@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'subpaisa' => SabpaisaMiddleware::class,
+            'sabpaisa' => SabpaisaMiddleware::class,
             'razorpay' => RazorpayMiddleware::class,
         ])->validateCsrfTokens(except: [
             'sabpaisa/*',

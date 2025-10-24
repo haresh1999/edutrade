@@ -7,14 +7,14 @@ use App\Http\Controllers\SabpaisaSandboxController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sabpaisa')->group(function () {
-    Route::post('request', [SabpaisaController::class, 'request'])->middleware('subpaisa');
-    Route::post('status', [SabpaisaController::class, 'status'])->middleware('subpaisa');
+    Route::post('request', [SabpaisaController::class, 'request'])->middleware('sabpaisa');
+    Route::post('status', [SabpaisaController::class, 'status'])->middleware('sabpaisa');
     Route::any('callback', [SabpaisaController::class, 'callback']);
     Route::any('webhook', [SabpaisaController::class, 'webhook']);
 
     Route::prefix('sandbox')->group(function () {
-        Route::post('request', [SabpaisaSandboxController::class, 'request'])->middleware('subpaisa');
-        Route::post('status', [SabpaisaSandboxController::class, 'status'])->middleware('subpaisa');
+        Route::post('request', [SabpaisaSandboxController::class, 'request'])->middleware('sabpaisa');
+        Route::post('status', [SabpaisaSandboxController::class, 'status'])->middleware('sabpaisa');
         Route::any('callback', [SabpaisaSandboxController::class, 'callback']);
         Route::any('webhook', [SabpaisaController::class, 'webhook']);
     });

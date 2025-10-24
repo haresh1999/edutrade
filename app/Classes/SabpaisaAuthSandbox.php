@@ -9,7 +9,6 @@ class SabpaisaAuthSandbox
 
     private static function fixKey($key)
     {
-
         if (strlen($key) < SabpaisaAuthSandbox::CIPHER_KEY_LEN) {
 
             return str_pad("$key", SabpaisaAuthSandbox::CIPHER_KEY_LEN, "0");

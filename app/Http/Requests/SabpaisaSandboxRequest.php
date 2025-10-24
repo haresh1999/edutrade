@@ -23,7 +23,7 @@ class SabpaisaSandboxRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['required', 'string', 'max:255', Rule::unique('sabpaisa_sandbox_orders', 'order_id')->where('user_id', config('services.subpaisa.user.id'))],
+            'order_id' => ['required', 'string', 'max:255', Rule::unique('sabpaisa_sandbox_orders', 'order_id')->where('user_id', config('services.sabpaisa.user.id'))],
             'amount' => ['required', 'numeric', 'min:1'],
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
