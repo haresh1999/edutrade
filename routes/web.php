@@ -4,6 +4,7 @@ use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\RazorpaySandboxController;
 use App\Http\Controllers\SabpaisaController;
 use App\Http\Controllers\SabpaisaSandboxController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sabpaisa')->group(function () {
@@ -36,3 +37,7 @@ Route::prefix('razorpay')->group(function () {
 
 Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
+
+Route::get('payment-callback', function (Request $request) {
+    dd(json_decode($request->response));
+});

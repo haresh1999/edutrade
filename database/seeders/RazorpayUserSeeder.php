@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\RazorpayUser;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class RazorpayUserSeeder extends Seeder
@@ -22,8 +21,8 @@ class RazorpayUserSeeder extends Seeder
             'client_secret' => '3cf6119c-18c9-411e-94b8-aa521588ec9d',
             'sandbox_client_id' => 'edutrade',
             'sandbox_client_secret' => 'e6395a8c-1566-496a-9623-d8ee4529d1a9',
-            'callback_url' => 'http://edutrade.in/payment/success',
-            'notify_url' => 'http://edutrade.in/payment/failed',
+            'callback_url' => 'http://edutrade.in/payment/payment-callback',
+            'notify_url' => null,
         ]);
     }
 }
