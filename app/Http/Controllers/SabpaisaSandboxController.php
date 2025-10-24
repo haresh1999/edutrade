@@ -72,9 +72,13 @@ class SabpaisaSandboxController extends Controller
                 }
             }
 
+            parse_str($decText, $data);
+
+            $response = json_encode($data, JSON_PRETTY_PRINT);
+
             SabpaisaSandboxOrder::where('order_id', $clientTxnId)->update([
                 'status' => in_array(strtolower($status), ['success', 'paid']) ? 'completed' : 'failed',
-                'request_response' => $decText,
+                'request_response' => $response,
             ]);
 
             $order = SabpaisaSandboxOrder::with('user')->where('order_id', $clientTxnId)->first();

@@ -33,7 +33,7 @@ class SabpaisaAuthSandbox
     {
         $parts = explode(':', $data);
         $encrypted = $parts[0];
-        $iv = $parts[1];
+        $iv = base64_decode($parts[1]);
 
         $decryptedData = openssl_decrypt(base64_decode($encrypted), SabpaisaAuthSandbox::OPENSSL_CIPHER_NAME, SabpaisaAuthSandbox::fixKey($key), OPENSSL_RAW_DATA, $iv);
         return $decryptedData;
