@@ -56,5 +56,10 @@ Route::view('razorpay-demo', 'razorpay_demo');
 Route::view('phonepe-demo', 'phonepe_demo');
 
 Route::get('payment-callback', function (Request $request) {
-    dd(json_decode($request->response));
+    dd('Success');
+});
+
+Route::get('get',function(){
+    $publicIp = @file_get_contents('https://api.ipify.org');
+    dd($publicIp);
 });
