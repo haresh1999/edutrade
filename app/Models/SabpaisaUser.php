@@ -18,6 +18,8 @@ class SabpaisaUser extends Model
         'sandbox_client_id',
         'sandbox_client_secret',
         'callback_url',
+        'redirect_url',
+        'whitelist_ip',
         'notify_url',
     ];
 }

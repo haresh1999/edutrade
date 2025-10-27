@@ -56,5 +56,12 @@ Route::view('razorpay-demo', 'razorpay_demo');
 Route::view('phonepe-demo', 'phonepe_demo');
 
 Route::get('payment-callback', function (Request $request) {
+
+    $data = json_encode($request->all());
+
+    $myip = $request->ip();
+
+    file_put_contents('sabpaisa_callback.txt', 'Webhook Received: ' . $data . ' From IP: ' . $myip);
+
     dd(json_decode($request->response));
 });
