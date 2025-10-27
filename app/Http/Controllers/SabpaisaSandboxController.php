@@ -52,7 +52,7 @@ class SabpaisaSandboxController extends Controller
 
     protected function clientCallback($url, $data)
     {
-        return Http::post($url, $data);
+        return Http::get($url, $data);
     }
 
     public function callback(Request $request, SabpaisaAuthSandbox $sabpaisaAuth)

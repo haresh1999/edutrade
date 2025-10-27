@@ -59,7 +59,7 @@ Route::get('payment-redirect', function (Request $request) {
     dd('dome');
 });
 
-Route::post('payment-callback', function (Request $request) {
+Route::get('payment-callback', function (Request $request) {
 
     $data = json_encode($request->all());
 
