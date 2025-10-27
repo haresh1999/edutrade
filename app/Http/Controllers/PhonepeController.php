@@ -198,7 +198,7 @@ class PhonepeController extends Controller
 
             $orderId = $request->order_id;
 
-            $url = "https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order/{$orderId}/status";
+            $url = "https://api.phonepe.com/apis/pg/checkout/v2/order/{$orderId}/status";
 
             $accessToken = $this->getAccessToken();
 
