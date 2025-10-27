@@ -27,7 +27,7 @@ class SabpaisaSandboxController extends Controller
         $input['currency'] = 'INR';
         $input['mcc'] = 5137;
         $input['channel_id'] = 'W';
-        $input['callback_url'] = env('SABPAISA_SANDBOX_CALLBACK_URL');
+        $input['callback_url'] = env('SABPAISA_SANDBOX_REDIRECT_URL');
         $input['class'] = 'VIII';
         $input['roll'] = '1008';
         $input['url'] = 'https://stage-securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1';

@@ -26,7 +26,7 @@ class SabpaisaController extends Controller
         $input['currency'] = 'INR';
         $input['mcc'] = 5137;
         $input['channel_id'] = 'W';
-        $input['callback_url'] = env('SABPAISA_CALLBACK_URL');
+        $input['callback_url'] = env('SABPAISA_REDIRECT_URL');
         $input['class'] = 'VIII';
         $input['roll'] = '1008';
         $input['url'] = 'https://securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1';

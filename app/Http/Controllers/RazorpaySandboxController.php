@@ -23,7 +23,7 @@ class RazorpaySandboxController extends Controller
 
         $url = "https://api.razorpay.com/v1/payment_links";
         $amount = ($input['amount'] * 100);
-        $callbackUrl = env('RAZORPAY_SANDBOX_CALLBACK_URL') . "?order_id={$input['order_id']}";
+        $callbackUrl = env('RAZORPAY_SANDBOX_REDIRECT_URL') . "?order_id={$input['order_id']}";
 
         $data = [
             "amount" => $amount,
