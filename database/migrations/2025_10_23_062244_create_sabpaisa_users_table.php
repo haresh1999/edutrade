@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('sandbox_client_id', 100)->unique();
             $table->string('sandbox_client_secret')->unique();
             $table->string('callback_url');
+            $table->string('redirect_url');
+            $table->ipAddress('whitelist_ip')->nullable();
             $table->string('notify_url')->nullable();
             $table->softDeletes();
             $table->timestamps();
