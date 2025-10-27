@@ -55,15 +55,11 @@ Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
 Route::view('phonepe-demo', 'phonepe_demo');
 
-Route::get('payment-callback', function (Request $request) {
-<<<<<<< HEAD
-    dd('Success');
+Route::get('payment-redirect', function (Request $request) {
+    dd('dome');
 });
 
-Route::get('get',function(){
-    $publicIp = @file_get_contents('https://api.ipify.org');
-    dd($publicIp);
-=======
+Route::get('payment-callback', function (Request $request) {
 
     $data = json_encode($request->all());
 
@@ -71,6 +67,7 @@ Route::get('get',function(){
 
     file_put_contents('sabpaisa_callback.txt', 'Webhook Received: ' . $data . ' From IP: ' . $myip);
 
-    dd(json_decode($request->response));
->>>>>>> cc8efe5081f2c24a01370aeac6ccc2e16db1b331
+    return response()->json([
+        'status' => 'success'
+    ]);
 });

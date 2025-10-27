@@ -107,9 +107,9 @@ class SabpaisaSandboxController extends Controller
 
             // $callbackUrl = $order->user->callback_url;
 
-            $redirectUrl = 'https://edutrade.in/payment/payment-callback';
+            $redirectUrl = 'https://edutrade.in/payment/payment-redirect';
 
-            $callbackUrl = 'https://edutrade.in/payment/';
+            $callbackUrl = 'https://edutrade.in/payment/payment-callback';
 
             $this->clientCallback($callbackUrl, $sendData);
 
