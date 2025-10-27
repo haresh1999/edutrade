@@ -52,7 +52,7 @@ class SabpaisaSandboxController extends Controller
 
     protected function clientCallback($url, $data)
     {
-        return Http::get($url, $data);
+        return Http::post($url, $data);
     }
 
     public function callback(Request $request, SabpaisaAuthSandbox $sabpaisaAuth)
@@ -100,16 +100,15 @@ class SabpaisaSandboxController extends Controller
                 'order_id' => $order->order_id,
                 'tnx_id' => $order->tnx_id,
                 'amount' => $order->amount,
-                'status' => $order->status
+                'status' => $order->status,
+                'payer_name' => $order->payer_name,
+                'payer_email' => $order->payer_email,
+                'payer_mobile' => $order->payer_mobile,
             ];
 
-            // $redirectUrl = $order->user->redirect_url;
+            $redirectUrl = $order->user->redirect_url;
 
-            // $callbackUrl = $order->user->callback_url;
-
-            $redirectUrl = 'https://edutrade.in/payment/payment-redirect';
-
-            $callbackUrl = 'https://edutrade.in/payment/payment-callback';
+            $callbackUrl = $order->user->callback_url;
 
             $this->clientCallback($callbackUrl, $sendData);
 

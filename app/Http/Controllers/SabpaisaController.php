@@ -82,6 +82,11 @@ class SabpaisaController extends Controller
         ]);
     }
 
+    protected function clientCallback($url, $data)
+    {
+        return Http::post($url, $data);
+    }
+
     public function callback(Request $request, SabpaisaAuth $sabpaisaAuth)
     {
         $input = $request->all();
@@ -119,16 +124,23 @@ class SabpaisaController extends Controller
 
             $order = SabpaisaOrder::with('user')->where('order_id', $clientTxnId)->first();
 
-            $sendData = json_encode([
+            $sendData = [
                 'order_id' => $order->order_id,
                 'tnx_id' => $order->tnx_id,
                 'amount' => $order->amount,
-                'status' => $order->status
-            ]);
+                'status' => $order->status,
+                'payer_name' => $order->payer_name,
+                'payer_email' => $order->payer_email,
+                'payer_mobile' => $order->payer_mobile,
+            ];
 
-            $backUrl = "{$order->user->callback_url}?response={$sendData}";
+            $redirectUrl = $order->user->redirect_url;
 
-            return redirect()->to($backUrl);
+            $callbackUrl = $order->user->callback_url;
+
+            $this->clientCallback($callbackUrl, $sendData);
+
+            return redirect()->to($redirectUrl);
         }
 
         return response()->json([
