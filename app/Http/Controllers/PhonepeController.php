@@ -71,7 +71,7 @@ class PhonepeController extends Controller
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
             'payer_mobile' => ['required', 'digits_between:9,11'],
-            'user_id' => ['required', 'integer', 'exists:phonepe_orders,id'],
+            'user_id' => ['required', 'integer', 'exists:phonepe_users,id'],
         ]);
 
         $payload = [
