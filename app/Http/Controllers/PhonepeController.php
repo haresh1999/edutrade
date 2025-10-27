@@ -2,20 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PhonepeOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class PhonepeController extends Controller
 {
+    public function create(Request $request)
+    {
+        $userId = config('services.phonepe.user.id');
+
+        $input = $request->validate([
+            'order_id' => ['required', 'string', Rule::unique('phonepe_orders', 'order_id')->where('user_id', $userId)],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'payer_name' => ['required', 'string', 'max:255'],
+            'payer_email' => ['required', 'email', 'max:255'],
+            'payer_mobile' => ['required', 'digits_between:9,11'],
+        ]);
+
+        $actionUrl = env('APP_URL') . '/phonepe/request';
+
+        return view('phonepe.request', compact('actionUrl', 'input', 'userId'));
+    }
+
     private function getAccessToken()
     {
         $url = 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token';
 
         $fields = [
-            'client_id' => 'SU2509231940115728161187',
-            'client_version' => 1,
-            'client_secret' => 'ef6c3f40-db7b-4839-b97d-cc114df6d895',
-            'grant_type' => 'client_credentials'
+            'client_id' => setting('client_id'),
+            'client_version' => setting('client_version'),
+            'client_secret' => setting('client_secret'),
+            'grant_type' => setting('grant_type')
         ];
 
         $headers = [
@@ -36,12 +56,14 @@ class PhonepeController extends Controller
 
         curl_close($ch);
 
-        return json_decode($response)->access_token;
+        $response = json_decode($response);
+
+        return $response->access_token;
     }
 
     public function request(Request $request)
     {
-        $userId = config('services.phonepe.user.id');
+        $userId = $request->user_id;
 
         $input = $request->validate([
             'order_id' => ['required', 'string', Rule::unique('phonepe_orders', 'order_id')->where('user_id', $userId)],
@@ -49,87 +71,71 @@ class PhonepeController extends Controller
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
             'payer_mobile' => ['required', 'digits_between:9,11'],
+            'user_id' => ['required', 'integer', 'exists:phonepe_orders,id'],
         ]);
 
-        $url = "https://api.razorpay.com/v1/payment_links";
-        $amount = ($input['amount'] * 100);
-        $callbackUrl = env('PHONEPE_CALLBACK_URL') . "?order_id={$input['order_id']}";
-
-        $data = [
-            "amount" => $amount,
-            "currency" => "INR",
-            "accept_partial" => false,
-            "description" => "Test payment link via cURL",
-            "customer" => [
-                "name" => $input['payer_name'],
-                "email" => $input['payer_email'],
-                "contact" => $input['payer_mobile']
+        $payload = [
+            'merchantOrderId' => $input['order_id'],
+            'amount' => ($input['amount'] * 100),
+            'paymentFlow' => [
+                'type' => 'PG_CHECKOUT',
+                'message' => 'Proceed to complete the payment',
+                'merchantUrls' => [
+                    'redirectUrl' => env('PHONEPE_REDIRECT_URL') . "?order_id={$input['order_id']}",
+                ],
             ],
-            "notify" => [
-                "sms" => true,
-                "email" => true
-            ],
-            "reminder_enable" => true,
-            "callback_url" => $callbackUrl,
-            "callback_method" => "get"
         ];
 
-        $key_id = setting('key_id');
-        $key_secret = setting('key_secret');
+        $accessToken = $this->getAccessToken();
+
+        $url = 'https://api.phonepe.com/apis/pg/checkout/v2/pay';
 
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERPWD, $key_id . ":" . $key_secret);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: O-Bearer ' . $accessToken,
+            ],
+        ]);
 
         $response = curl_exec($ch);
 
-        if (curl_errno($ch)) {
-
-            return response()->json([
-                'status' => 'error',
-                'message' => curl_error($ch)
-            ], 401);
-        }
-
         curl_close($ch);
 
-        $result = json_decode($response, true);
+        $redirectUrl = json_decode($response, true);
 
-        if (isset($result['short_url'])) {
+        $create['user_id'] = $userId;
+        $create['order_id'] = $input['order_id'];
+        $create['amount'] = $input['amount'];
+        $create['payer_name'] = $input['payer_name'];
+        $create['payer_email'] = $input['payer_email'];
+        $create['payer_mobile'] = $input['payer_mobile'];
+        $create['request_response'] = $response;
 
-            RazorpayOrder::create([
-                'user_id' => $userId,
-                'order_id' => $input['order_id'],
-                'amount' => $input['amount'],
-                'payer_name' => $input['payer_name'],
-                'payer_email' => $input['payer_email'],
-                'payer_mobile' => $input['payer_mobile'],
-                'request_response' => $response,
-            ]);
+        if (isset($redirectUrl['redirectUrl'])) {
 
-            return redirect()->to($result['short_url']);
-        } else {
+            $redirectTo = $redirectUrl['redirectUrl'];
 
-            RazorpayOrder::create([
-                'user_id' => $userId,
-                'order_id' => $input['order_id'],
-                'amount' => $input['amount'],
-                'payer_name' => $input['payer_name'],
-                'payer_email' => $input['payer_email'],
-                'payer_mobile' => $input['payer_mobile'],
-                'request_response' => $response,
-                'status' => 'failed',
-            ]);
+            $create['status'] = 'pending';
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to create payment link',
-                'details' => $result
-            ], 401);
+            PhonepeOrder::create($create);
+
+            return redirect()->to($redirectTo);
         }
+
+        $create['status'] = 'failed';
+
+        PhonepeOrder::create($create);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to create payment link',
+            'details' => $response
+        ], 401);
     }
 
     public function status(Request $request)
@@ -150,7 +156,7 @@ class PhonepeController extends Controller
 
         $input = $validator->validated();
 
-        $order = RazorpayOrder::where('user_id', $userId)
+        $order = PhonepeOrder::where('user_id', $userId)
             ->where('tnx_id', $input['tnx_id'])
             ->first();
 
@@ -165,39 +171,121 @@ class PhonepeController extends Controller
         ]);
     }
 
+    private function clientCallback($url, $order)
+    {
+        $data = [
+            'order_id' => $order->order_id,
+            'tnx_id' => $order->tnx_id,
+            'amount' => $order->amount,
+            'status' => $order->status,
+            'payer_name' => $order->payer_name,
+            'payer_email' => $order->payer_email,
+            'payer_mobile' => $order->payer_mobile,
+        ];
+
+        return Http::post($url, $data);
+    }
+
     public function callback(Request $request)
     {
-        if ($request->has('order_id') && $request->has('razorpay_payment_link_id')) {
+        $order = PhonepeOrder::with('user')
+            ->where('order_id', $request->order_id)
+            ->first();
 
-            $payment_link_id = $request->razorpay_payment_link_id ?? '';
-            $payment_link_ref = $request->razorpay_payment_link_reference_id ?? '';
-            $payment_id = $request->razorpay_payment_id ?? '';
-            $payment_status = $request->razorpay_payment_link_status ?? '';
-            $signature = $request->razorpay_signature ?? '';
+        abort_if(is_null($order), 404);
 
-            RazorpayOrder::where('order_id', $request->order_id)->update([
-                'status' => $payment_status == 'paid' ? 'paid' : 'failed',
-                'request_response' => json_encode($request->all()),
+        if ($request->has('order_id')) {
+
+            $orderId = $request->order_id;
+
+            $url = "https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order/{$orderId}/status";
+
+            $accessToken = $this->getAccessToken();
+
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: O-Bearer ' . $accessToken,
+            ];
+
+            $ch = curl_init();
+
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPGET => true,
+                CURLOPT_HTTPHEADER => $headers,
             ]);
 
-            $order = RazorpayOrder::with('user')->where('order_id', $request->order_id)->first();
+            $response = curl_exec($ch);
 
-            $sendData = json_encode([
-                'order_id' => $order->order_id,
-                'tnx_id' => $order->tnx_id,
-                'amount' => $order->amount,
-                'status' => $order->status
-            ]);
+            $res = json_decode($response);
 
-            $backUrl = "{$order->user->callback_url}?response={$sendData}";
+            if (curl_errno($ch)) {
 
-            return redirect()->to($backUrl);
+                curl_close($ch);
+
+                $redirectUrl = $order->user->redirect_url;
+
+                $callbackUrl = $order->user->callback_url;
+
+                $order->update([
+                    'status' => 'failed',
+                    'request_response' => $response,
+                ]);
+
+                $this->clientCallback($callbackUrl, $order);
+
+                return redirect()->to($redirectUrl);
+            } else {
+
+                curl_close($ch);
+
+                if (strtolower($res->state) == 'completed') {
+
+                    $redirectUrl = $order->user->redirect_url;
+
+                    $callbackUrl = $order->user->callback_url;
+
+                    $order->update([
+                        'status' => 'completed',
+                        'request_response' => $response,
+                    ]);
+
+                    $this->clientCallback($callbackUrl, $order);
+
+                    return redirect()->to($redirectUrl);
+                }
+
+                if (strtolower($res->state) == 'pending') {
+
+                    $redirectUrl = $order->user->redirect_url;
+
+                    $callbackUrl = $order->user->callback_url;
+
+                    $order->update([
+                        'status' => 'pending',
+                        'request_response' => $response,
+                    ]);
+
+                    $this->clientCallback($callbackUrl, $order);
+
+                    return redirect()->to($redirectUrl);
+                }
+
+                $redirectUrl = $order->user->redirect_url;
+
+                $callbackUrl = $order->user->callback_url;
+
+                $order->update([
+                    'status' => 'failed',
+                    'request_response' => $response,
+                ]);
+
+                $this->clientCallback($callbackUrl, $order);
+
+                return redirect()->to($redirectUrl);
+            }
         }
-
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Something went wrong!, Unable to handle response',
-        ], 401);
     }
 
     public function webhook()

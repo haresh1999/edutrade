@@ -146,7 +146,7 @@ class RazorpayController extends Controller
             $signature = $request->razorpay_signature ?? '';
 
             RazorpayOrder::where('order_id', $request->order_id)->update([
-                'status' => $payment_status == 'paid' ? 'paid' : 'failed',
+                'status' => $payment_status == 'paid' ? 'completed' : 'failed',
                 'request_response' => json_encode($request->all()),
             ]);
 

@@ -2,9 +2,294 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PhonepeSandboxOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class PhonepeSandboxController extends Controller
 {
-    //
+    public function create(Request $request)
+    {
+        $userId = config('services.phonepe.user.id');
+
+        $input = $request->validate([
+            'order_id' => ['required', 'string', Rule::unique('phonepe_sandbox_orders', 'order_id')->where('user_id', $userId)],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'payer_name' => ['required', 'string', 'max:255'],
+            'payer_email' => ['required', 'email', 'max:255'],
+            'payer_mobile' => ['required', 'digits_between:9,11'],
+        ]);
+
+        $actionUrl = env('APP_URL') . '/phonepe/sandbox/request';
+
+        return view('phonepe.request', compact('actionUrl', 'input', 'userId'));
+    }
+
+    private function getAccessToken()
+    {
+        $url = 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+
+        $fields = [
+            'client_id' => setting('client_id'),
+            'client_version' => setting('client_version'),
+            'client_secret' => setting('client_secret'),
+            'grant_type' => setting('grant_type')
+        ];
+
+        $headers = [
+            'Content-Type: application/x-www-form-urlencoded'
+        ];
+
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($fields), // encodes as form data
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+
+        $response = curl_exec($ch);
+
+        curl_close($ch);
+
+        $response = json_decode($response);
+
+        return $response->access_token;
+    }
+
+    public function request(Request $request)
+    {
+        $userId = $request->user_id;
+
+        $input = $request->validate([
+            'order_id' => ['required', 'string', Rule::unique('phonepe_sandbox_orders', 'order_id')->where('user_id', $userId)],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'payer_name' => ['required', 'string', 'max:255'],
+            'payer_email' => ['required', 'email', 'max:255'],
+            'payer_mobile' => ['required', 'digits_between:9,11'],
+            'user_id' => ['required', 'integer', 'exists:phonepe_sandbox_orders,id'],
+        ]);
+
+        $payload = [
+            'merchantOrderId' => $input['order_id'],
+            'amount' => ($input['amount'] * 100),
+            'paymentFlow' => [
+                'type' => 'PG_CHECKOUT',
+                'message' => 'Proceed to complete the payment',
+                'merchantUrls' => [
+                    'redirectUrl' => env('PHONEPE_SANDBOX_REDIRECT_URL') . "?order_id={$input['order_id']}",
+                ],
+            ],
+        ];
+
+        $accessToken = $this->getAccessToken();
+
+        $url = 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/pay';
+
+        $ch = curl_init($url);
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: O-Bearer ' . $accessToken,
+            ],
+        ]);
+
+        $response = curl_exec($ch);
+
+        curl_close($ch);
+
+        $redirectUrl = json_decode($response, true);
+
+        $create['user_id'] = $userId;
+        $create['order_id'] = $input['order_id'];
+        $create['amount'] = $input['amount'];
+        $create['payer_name'] = $input['payer_name'];
+        $create['payer_email'] = $input['payer_email'];
+        $create['payer_mobile'] = $input['payer_mobile'];
+        $create['request_response'] = $response;
+
+        if (isset($redirectUrl['redirectUrl'])) {
+
+            $redirectTo = $redirectUrl['redirectUrl'];
+
+            $create['status'] = 'pending';
+
+            PhonepeSandboxOrder::create($create);
+
+            return redirect()->to($redirectTo);
+        }
+
+        $create['status'] = 'failed';
+
+        PhonepeSandboxOrder::create($create);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to create payment link',
+            'details' => $response
+        ], 401);
+    }
+
+    public function status(Request $request)
+    {
+        $userId = config('services.phonepe.user.id');
+
+        $validator = Validator::make($request->all(), [
+            'tnx_id' => ['required', 'string', Rule::exists('phonepe_sandbox_orders', 'tnx_id')->where('user_id', $userId)],
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $input = $validator->validated();
+
+        $order = PhonepeSandboxOrder::where('user_id', $userId)
+            ->where('tnx_id', $input['tnx_id'])
+            ->first();
+
+        return response()->json([
+            'order_id' => $order->order_id,
+            'tnx_id' => $order->tnx_id,
+            'amount' => $order->amount,
+            'status' => $order->status,
+            'payer_name' => $order->payer_name,
+            'payer_email' => $order->payer_email,
+            'payer_mobile' => $order->payer_mobile,
+        ]);
+    }
+
+    private function clientCallback($url, $order)
+    {
+        $data = [
+            'order_id' => $order->order_id,
+            'tnx_id' => $order->tnx_id,
+            'amount' => $order->amount,
+            'status' => $order->status,
+            'payer_name' => $order->payer_name,
+            'payer_email' => $order->payer_email,
+            'payer_mobile' => $order->payer_mobile,
+        ];
+
+        return Http::post($url, $data);
+    }
+
+    public function callback(Request $request)
+    {
+        $order = PhonepeSandboxOrder::with('user')
+            ->where('order_id', $request->order_id)
+            ->first();
+
+        abort_if(is_null($order), 404);
+
+        if ($request->has('order_id')) {
+
+            $orderId = $request->order_id;
+
+            $url = "https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order/{$orderId}/status";
+
+            $accessToken = $this->getAccessToken();
+
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: O-Bearer ' . $accessToken,
+            ];
+
+            $ch = curl_init();
+
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPGET => true,
+                CURLOPT_HTTPHEADER => $headers,
+            ]);
+
+            $response = curl_exec($ch);
+
+            $res = json_decode($response);
+
+            if (curl_errno($ch)) {
+
+                curl_close($ch);
+
+                $redirectUrl = $order->user->redirect_url;
+
+                $callbackUrl = $order->user->callback_url;
+
+                $order->update([
+                    'status' => 'failed',
+                    'request_response' => $response,
+                ]);
+
+                $this->clientCallback($callbackUrl, $order);
+
+                return redirect()->to($redirectUrl);
+            } else {
+
+                curl_close($ch);
+
+                if (strtolower($res->state) == 'completed') {
+
+                    $redirectUrl = $order->user->redirect_url;
+
+                    $callbackUrl = $order->user->callback_url;
+
+                    $order->update([
+                        'status' => 'completed',
+                        'request_response' => $response,
+                    ]);
+
+                    $this->clientCallback($callbackUrl, $order);
+
+                    return redirect()->to($redirectUrl);
+                }
+
+                if (strtolower($res->state) == 'pending') {
+
+                    $redirectUrl = $order->user->redirect_url;
+
+                    $callbackUrl = $order->user->callback_url;
+
+                    $order->update([
+                        'status' => 'pending',
+                        'request_response' => $response,
+                    ]);
+
+                    $this->clientCallback($callbackUrl, $order);
+
+                    return redirect()->to($redirectUrl);
+                }
+
+                $redirectUrl = $order->user->redirect_url;
+
+                $callbackUrl = $order->user->callback_url;
+
+                $order->update([
+                    'status' => 'failed',
+                    'request_response' => $response,
+                ]);
+
+                $this->clientCallback($callbackUrl, $order);
+
+                return redirect()->to($redirectUrl);
+            }
+        }
+    }
+
+    public function webhook()
+    {
+        //
+    }
 }

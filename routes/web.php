@@ -38,13 +38,15 @@ Route::prefix('razorpay')->group(function () {
 });
 
 Route::prefix('phonepe')->group(function () {
-    Route::post('request', [PhonepeController::class, 'request'])->middleware('phonepe');
+    Route::post('create', [PhonepeController::class, 'create'])->middleware('phonepe');
+    Route::post('request', [PhonepeController::class, 'request']);
     Route::post('status', [PhonepeController::class, 'status'])->middleware('phonepe');
     Route::any('callback', [PhonepeController::class, 'callback']);
     Route::any('webhook', [PhonepeController::class, 'webhook']);
 
     Route::prefix('sandbox')->group(function () {
-        Route::post('request', [PhonepeSandboxController::class, 'request'])->middleware('phonepe');
+        Route::post('create', [PhonepeSandboxController::class, 'create'])->middleware('phonepe');
+        Route::post('request', [PhonepeSandboxController::class, 'request']);
         Route::post('status', [PhonepeSandboxController::class, 'status'])->middleware('phonepe');
         Route::any('callback', [PhonepeSandboxController::class, 'callback']);
         Route::any('webhook', [PhonepeSandboxController::class, 'webhook']);
