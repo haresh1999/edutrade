@@ -2,19 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RazorpayOrder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class RazorpayController extends Controller
+class PhonepeController extends Controller
 {
+    private function getAccessToken()
+    {
+        $url = 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token';
+
+        $fields = [
+            'client_id' => 'SU2509231940115728161187',
+            'client_version' => 1,
+            'client_secret' => 'ef6c3f40-db7b-4839-b97d-cc114df6d895',
+            'grant_type' => 'client_credentials'
+        ];
+
+        $headers = [
+            'Content-Type: application/x-www-form-urlencoded'
+        ];
+
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($fields), // encodes as form data
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+
+        $response = curl_exec($ch);
+
+        curl_close($ch);
+
+        return json_decode($response)->access_token;
+    }
+
     public function request(Request $request)
     {
-        $userId = config('services.razorpay.user.id');
+        $userId = config('services.phonepe.user.id');
 
         $input = $request->validate([
-            'order_id' => ['required', 'string', Rule::unique('razorpay_orders', 'order_id')->where('user_id', $userId)],
+            'order_id' => ['required', 'string', Rule::unique('phonepe_orders', 'order_id')->where('user_id', $userId)],
             'amount' => ['required', 'numeric', 'min:1'],
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
@@ -23,7 +53,7 @@ class RazorpayController extends Controller
 
         $url = "https://api.razorpay.com/v1/payment_links";
         $amount = ($input['amount'] * 100);
-        $callbackUrl = env('RAZORPAY_CALLBACK_URL') . "?order_id={$input['order_id']}";
+        $callbackUrl = env('PHONEPE_CALLBACK_URL') . "?order_id={$input['order_id']}";
 
         $data = [
             "amount" => $amount,
@@ -104,10 +134,10 @@ class RazorpayController extends Controller
 
     public function status(Request $request)
     {
-        $userId = config('services.razorpay.user.id');
+        $userId = config('services.phonepe.user.id');
 
         $validator = Validator::make($request->all(), [
-            'tnx_id' => ['required', 'string', Rule::exists('razorpay_orders', 'tnx_id')->where('user_id', $userId)],
+            'tnx_id' => ['required', 'string', Rule::exists('phonepe_orders', 'tnx_id')->where('user_id', $userId)],
         ]);
 
         if ($validator->fails()) {

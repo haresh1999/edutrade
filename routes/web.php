@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\PhonepeController;
+use App\Http\Controllers\PhonepeSandboxController;
 use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\RazorpaySandboxController;
 use App\Http\Controllers\SabpaisaController;
@@ -35,8 +37,23 @@ Route::prefix('razorpay')->group(function () {
     });
 });
 
+Route::prefix('phonepe')->group(function () {
+    Route::post('request', [PhonepeController::class, 'request'])->middleware('phonepe');
+    Route::post('status', [PhonepeController::class, 'status'])->middleware('phonepe');
+    Route::any('callback', [PhonepeController::class, 'callback']);
+    Route::any('webhook', [PhonepeController::class, 'webhook']);
+
+    Route::prefix('sandbox')->group(function () {
+        Route::post('request', [PhonepeSandboxController::class, 'request'])->middleware('phonepe');
+        Route::post('status', [PhonepeSandboxController::class, 'status'])->middleware('phonepe');
+        Route::any('callback', [PhonepeSandboxController::class, 'callback']);
+        Route::any('webhook', [PhonepeSandboxController::class, 'webhook']);
+    });
+});
+
 Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
+Route::view('phonepe-demo', 'phonepe_demo');
 
 Route::get('payment-callback', function (Request $request) {
     dd(json_decode($request->response));

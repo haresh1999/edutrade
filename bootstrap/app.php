@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PhonepeMiddleware;
 use App\Http\Middleware\RazorpayMiddleware;
 use App\Http\Middleware\SabpaisaMiddleware;
 use Illuminate\Foundation\Application;
@@ -16,9 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'sabpaisa' => SabpaisaMiddleware::class,
             'razorpay' => RazorpayMiddleware::class,
+            'phonepe' => PhonepeMiddleware::class,
         ])->validateCsrfTokens(except: [
             'sabpaisa/*',
             'razorpay/*',
+            'phonepe/*',
         ]);;
     })
     ->withExceptions(function (Exceptions $exceptions): void {

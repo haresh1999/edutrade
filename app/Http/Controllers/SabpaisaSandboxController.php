@@ -14,7 +14,15 @@ class SabpaisaSandboxController extends Controller
 {
     public function request(SabpaisaSandboxRequest $request, SabpaisaAuthSandbox $sabpaisaAuth)
     {
-        $input = $request->validated();
+        $userId = config('services.sabpaisa.user.id');
+
+        $input = $request->validate([
+            'order_id' => ['required', 'string', 'max:255', Rule::unique('sabpaisa_sandbox_orders', 'order_id')->where('user_id', $userId)],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'payer_name' => ['required', 'string', 'max:255'],
+            'payer_email' => ['required', 'email', 'max:255'],
+            'payer_mobile' => ['required', 'digits_between:9,11'],
+        ]);
 
         $input['currency'] = 'INR';
         $input['mcc'] = 5137;
@@ -22,14 +30,14 @@ class SabpaisaSandboxController extends Controller
         $input['callback_url'] = env('SABPAISA_SANDBOX_CALLBACK_URL');
         $input['class'] = 'VIII';
         $input['roll'] = '1008';
-        $input['url'] = sabpaisaSandbox('url');
-        $input['user_id'] = config('services.sabpaisa.user.id');
+        $input['url'] = 'https://stage-securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1';
+        $input['user_id'] = $userId;
 
-        $clientCode = sabpaisaSandbox('client_code');
-        $username = sabpaisaSandbox('username');
-        $password = sabpaisaSandbox('password');
-        $authKey = sabpaisaSandbox('auth_key');
-        $authIV = sabpaisaSandbox('auth_iv');
+        $clientCode = setting('client_code');
+        $username = setting('username');
+        $password = setting('password');
+        $authKey = setting('auth_key');
+        $authIV = setting('auth_iv');
 
         $encData = "?clientCode=" . $clientCode . "&transUserName=" . $username . "&transUserPassword=" . $password .
             "&payerName=" . $input['payer_name'] . "&payerMobile=" . $input['payer_mobile'] . "&payerEmail=" . $input['payer_email'] . "&clientTxnId=" . $input['order_id'] . "&amount=" . $input['amount'] . "&amountType=" . $input['currency'] . "&mcc=" . $input['mcc'] . "&channelId=" . $input['channel_id'] .
@@ -48,8 +56,8 @@ class SabpaisaSandboxController extends Controller
 
         if (isset($input['encResponse'])) {
 
-            $authKey = sabpaisaSandbox('auth_key');
-            $authIV = sabpaisaSandbox('auth_iv');
+            $authKey = setting('auth_key');
+            $authIV = setting('auth_iv');
 
             $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $input['encResponse']);
 
@@ -138,8 +146,8 @@ class SabpaisaSandboxController extends Controller
     {
         $data = $request->input('encData');
 
-        $authKey = sabpaisaSandbox('auth_key');
-        $authIV = sabpaisaSandbox('auth_iv');
+        $authKey = setting('auth_key');
+        $authIV = setting('auth_iv');
 
         $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $data);
 

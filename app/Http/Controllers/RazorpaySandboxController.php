@@ -44,8 +44,8 @@ class RazorpaySandboxController extends Controller
             "callback_method" => "get"
         ];
 
-        $key_id = razorpaySandbox('key_id');
-        $key_secret = razorpaySandbox('key_secret');
+        $key_id = setting('key_id');
+        $key_secret = setting('key_secret');
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Classes\SabpaisaAuth;
-use App\Http\Requests\SabpaisaRequest;
 use App\Models\SabpaisaOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -12,9 +11,17 @@ use Illuminate\Validation\Rule;
 
 class SabpaisaController extends Controller
 {
-    public function request(SabpaisaRequest $request, SabpaisaAuth $sabpaisaAuth)
+    public function request(Request $request, SabpaisaAuth $sabpaisaAuth)
     {
-        $input = $request->validated();
+        $userId = config('services.sabpaisa.user.id');
+
+        $input = $request->validate([
+            'order_id' => ['required', 'string', 'max:255', Rule::unique('sabpaisa_orders', 'order_id')->where('user_id', $userId)],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'payer_name' => ['required', 'string', 'max:255'],
+            'payer_email' => ['required', 'email', 'max:255'],
+            'payer_mobile' => ['required', 'digits_between:9,11'],
+        ]);
 
         $input['currency'] = 'INR';
         $input['mcc'] = 5137;
@@ -22,14 +29,14 @@ class SabpaisaController extends Controller
         $input['callback_url'] = env('SABPAISA_CALLBACK_URL');
         $input['class'] = 'VIII';
         $input['roll'] = '1008';
-        $input['url'] = sabpaisa('url');
-        $input['user_id'] = config('services.sabpaisa.user.id');
+        $input['url'] = 'https://securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1';
+        $input['user_id'] = $userId;
 
-        $clientCode = sabpaisa('client_code');
-        $username = sabpaisa('username');
-        $password = sabpaisa('password');
-        $authKey = sabpaisa('auth_key');
-        $authIV = sabpaisa('auth_iv');
+        $clientCode = setting('client_code');
+        $username = setting('username');
+        $password = setting('password');
+        $authKey = setting('auth_key');
+        $authIV = setting('auth_iv');
 
         $encData = "?clientCode=" . $clientCode . "&transUserName=" . $username . "&transUserPassword=" . $password .
             "&payerName=" . $input['payer_name'] . "&payerMobile=" . $input['payer_mobile'] . "&payerEmail=" . $input['payer_email'] . "&clientTxnId=" . $input['order_id'] . "&amount=" . $input['amount'] . "&amountType=" . $input['currency'] . "&mcc=" . $input['mcc'] . "&channelId=" . $input['channel_id'] .
@@ -81,8 +88,8 @@ class SabpaisaController extends Controller
 
         if (isset($input['encResponse'])) {
 
-            $authKey = sabpaisa('auth_key');
-            $authIV = sabpaisa('auth_iv');
+            $authKey = setting('auth_key');
+            $authIV = setting('auth_iv');
 
             $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $input['encResponse']);
 
@@ -134,8 +141,8 @@ class SabpaisaController extends Controller
     {
         $data = $request->input('encData');
 
-        $authKey = sabpaisa('auth_key');
-        $authIV = sabpaisa('auth_iv');
+        $authKey = setting('auth_key');
+        $authIV = setting('auth_iv');
 
         $decText = $sabpaisaAuth->decrypt($authKey, $authIV, $data);
 

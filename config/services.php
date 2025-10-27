@@ -43,7 +43,6 @@ return [
             'password' => 'DBOI1_SP3036',
             'auth_key' => '0jeOYcu3UnfmWyLC',
             'auth_iv' => 'C28LAmGxXTqmK0QJ',
-            'url' => 'https://stage-securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1'
         ],
         'production' => [
             'client_code' => 'SHA9I6',
@@ -51,7 +50,6 @@ return [
             'password' => 'SHA9I6_SP23560',
             'auth_key' => 'HT3sbrw8jrzKBmZqt0Wr7iFWZaq9mWy5j8d/Yu7WQxE=',
             'auth_iv' => '0Op4vCNftDe4i0OwdOfP99BW2qz8KCfOzyXz66VWL4L2q50/uzB2ygpF6Xq+2Vea',
-            'url' => 'https://securepay.sabpaisa.in/SabPaisa/sabPaisaInit?v=1'
         ],
     ],
 
@@ -64,6 +62,26 @@ return [
         'production' => [
             'key_id' => 'rzp_live_RTIzeZS7Q22shx',
             'key_secret' => 'nca3Agw8XlpW95Hfmp4et4al'
+        ],
+    ],
+
+    'phonepe' => [
+        'user' => [],
+        'sandbox' => [
+            'merchant' => 'EDU TRADE',
+            'merchant_id' => 'M23PMXE558QOM',
+            'client_id' => 'TEST-M23PMXE558QOM_25101',
+            'client_version' => 1,
+            'client_secret' => 'NDQ5ODdhMDYtN2YzOC00ZTQzLWE5NGYtODQxYTRjM2E1YWJi',
+            'grant_type' => 'client_credentials',
+        ],
+        'production' => [
+            'merchant' => 'EDU TRADE',
+            'merchant_id' => 'M23PMXE558QOM',
+            'client_id' => 'SU2509231940115728161187',
+            'client_version' => 1,
+            'client_secret' => 'ef6c3f40-db7b-4839-b97d-cc114df6d895',
+            'grant_type' => 'client_credentials',
         ],
     ]
 ];
