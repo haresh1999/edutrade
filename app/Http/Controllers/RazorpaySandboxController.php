@@ -3,12 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\RazorpaySandboxOrder;
+use App\Models\RazorpayUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class RazorpaySandboxController extends Controller
 {
+    public function token()
+    {
+        $userId = config('services.razorpay.user.id');
+
+        $token = str()->random(100);
+
+        RazorpayUser::where('id', $userId)->update(['refresh_token' => $token]);
+
+        return response()->json([
+            'refresh_token' => $token
+        ]);
+    }
+
     public function request(Request $request)
     {
         $userId = config('services.razorpay.user.id');
