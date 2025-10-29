@@ -24,12 +24,14 @@ Route::prefix('sabpaisa')->group(function () {
 });
 
 Route::prefix('razorpay')->group(function () {
+    Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
     Route::post('request', [RazorpayController::class, 'request'])->middleware('razorpay');
     Route::post('status', [RazorpayController::class, 'status'])->middleware('razorpay');
     Route::any('callback', [RazorpayController::class, 'callback']);
     Route::any('webhook', [RazorpayController::class, 'webhook']);
 
     Route::prefix('sandbox')->group(function () {
+        Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
         Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware('razorpay');
         Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware('razorpay');
         Route::any('callback', [RazorpaySandboxController::class, 'callback']);

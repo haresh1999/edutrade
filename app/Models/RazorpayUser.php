@@ -21,5 +21,6 @@ class RazorpayUser extends Model
         'redirect_url',
         'whitelist_ip',
         'notify_url',
+        'refresh_token'
     ];
 }
