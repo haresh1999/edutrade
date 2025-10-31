@@ -11,8 +11,7 @@
     <h1>Sandbox Payment</h1>
 
     <form action="{{ url('/phonepe/sandbox/create') }}" method="post">
-        <input type="text" name="client_id" value="edutrade">
-        <input type="text" name="client_secret" value="993a1cc7-0b63-41e3-bebf-387e3070d50f">
+        <input type="text" name="refresh_token" value="">
         <input type="text" name="payer_name" value="Haresh">
         <input type="text" name="payer_email" value="hareshc1999@gmail.com">
         <input type="text" name="payer_mobile" value="9106029220">
@@ -26,8 +25,7 @@
     <h1>Live Payment</h1>
 
     <form action="{{ url('/phonepe/create') }}" method="post">
-        <input type="text" name="client_id" value="edutrade">
-        <input type="text" name="client_secret" value="e1b2b70c-3574-41ad-a33d-50f38c5a927a">
+        <input type="text" name="refresh_token" value="">
         <input type="text" name="payer_name" value="Haresh">
         <input type="text" name="payer_email" value="hareshc1999@gmail.com">
         <input type="text" name="payer_mobile" value="9106029220">
