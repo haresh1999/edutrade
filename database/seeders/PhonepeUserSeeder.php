@@ -24,7 +24,6 @@ class PhonepeUserSeeder extends Seeder
             'callback_url' => 'https://inte-cashier-dev.finpoints.tech/pay/union_notify/AdapterEcurrency',
             'redirect_url' => 'https://inte-cashier-dev.finpoints.tech/payResult/index.html',
             'whitelist_ip' => null,
-            'notify_url' => null,
         ]);
     }
 }

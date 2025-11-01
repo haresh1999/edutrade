@@ -20,7 +20,6 @@ class RazorpayUser extends Model
         'callback_url',
         'redirect_url',
         'whitelist_ip',
-        'notify_url',
         'refresh_token'
     ];
 }
