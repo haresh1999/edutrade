@@ -65,13 +65,13 @@ Route::get('payment-redirect', function (Request $request) {
     dd('dome');
 });
 
-Route::get('payment-callback', function (Request $request) {
+Route::post('payment-callback', function (Request $request) {
 
     $data = json_encode($request->all());
 
-    $myip = $request->ip();
+    $publicIp = file_get_contents('https://api.ipify.org');
 
-    file_put_contents('sabpaisa_callback.txt', 'Webhook Received: ' . $data . ' From IP: ' . $myip);
+    file_put_contents('sabpaisa_callback.txt', 'Webhook Received: ' . $data . ' From IP: ' . $publicIp);
 
     return response()->json([
         'status' => 'success'
