@@ -6,7 +6,7 @@ use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\RazorpaySandboxController;
 use App\Http\Controllers\SabpaisaController;
 use App\Http\Controllers\SabpaisaSandboxController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\PayoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sabpaisa')->group(function () {
@@ -56,6 +56,8 @@ Route::prefix('phonepe')->group(function () {
         Route::any('webhook', [PhonepeSandboxController::class, 'webhook']);
     });
 });
+
+Route::get('payout/request', [PayoutController::class, 'request']);
 
 Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
