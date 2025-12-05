@@ -16,8 +16,8 @@ class SabpaisaMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $clientId = $request->get('client_id');
-        $clientSecret = $request->get('client_secret');
+        $clientId = request('client_id', '');
+        $clientSecret = request('client_secret', '');
         $is_sandbox = str_contains(url()->current(), 'sandbox');
 
         $user = SabpaisaUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret) {

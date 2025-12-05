@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PaytmMiddleware;
 use App\Http\Middleware\PhonepeMiddleware;
 use App\Http\Middleware\RazorpayMiddleware;
 use App\Http\Middleware\SabpaisaMiddleware;
@@ -18,10 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'sabpaisa' => SabpaisaMiddleware::class,
             'razorpay' => RazorpayMiddleware::class,
             'phonepe' => PhonepeMiddleware::class,
+            'paytm' => PaytmMiddleware::class,
         ])->validateCsrfTokens(except: [
             'sabpaisa/*',
             'razorpay/*',
             'phonepe/*',
+            'paytm/*',
         ]);;
     })
     ->withExceptions(function (Exceptions $exceptions): void {

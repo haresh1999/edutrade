@@ -83,5 +83,23 @@ return [
             'client_secret' => 'ef6c3f40-db7b-4839-b97d-cc114df6d895',
             'grant_type' => 'client_credentials',
         ],
+    ],
+
+    'paytm' => [
+        'user' => [],
+        'sandbox' => [
+            'mid' => 'Resell00448805757124',
+            'mkey' => 'KXHUJH&Ywq9pUkkr',
+            'website' => 'WEBSTAGING',
+            'industry_type' => 'Retail',
+            'cid' => 'WEB'
+        ],
+        'production' => [
+            'mid' => 'RsTmrE01629973240425',
+            'mkey' => 'bOuZxyutTrfL1DKV',
+            'website' => 'DEFAULT',
+            'industry_type' => 'Retail',
+            'cid' => 'WEB'
+        ]
     ]
 ];

@@ -14,10 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            SabpaisaUserSeeder::class,
-            RazorpayUserSeeder::class,
-            PhonepeUserSeeder::class,
-        ]);
+        // $this->call([
+        //     SabpaisaUserSeeder::class,
+        //     RazorpayUserSeeder::class,
+        //     PhonepeUserSeeder::class,
+        //     PaytmSeeder::class
+        // ]);
     }
 }

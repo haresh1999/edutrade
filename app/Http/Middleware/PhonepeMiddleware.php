@@ -18,9 +18,9 @@ class PhonepeMiddleware
     {
         $currentUrl = url()->current();
 
-        $clientId = $request->get('client_id');
-        $clientSecret = $request->get('client_secret');
-        $refreshToken = $request->get('refresh_token');
+        $clientId = request('client_id', '');
+        $clientSecret = request('client_secret', '');
+        $refreshToken = request('refresh_token', '');
         $is_sandbox = str_contains($currentUrl, 'sandbox');
 
         $user = PhonepeUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret, $refreshToken, $currentUrl) {
