@@ -7,6 +7,8 @@ use App\Http\Controllers\RazorpaySandboxController;
 use App\Http\Controllers\SabpaisaController;
 use App\Http\Controllers\SabpaisaSandboxController;
 use App\Http\Controllers\PayoutController;
+use App\Http\Controllers\PaytmController;
+use App\Http\Controllers\PaytmSandboxController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sabpaisa')->group(function () {
@@ -57,11 +59,30 @@ Route::prefix('phonepe')->group(function () {
     });
 });
 
+Route::prefix('paytm')->group(function () {
+    Route::post('token', [PaytmController::class, 'token'])->middleware('paytm');
+    Route::post('create', [PaytmController::class, 'create'])->middleware('paytm');
+    Route::post('request', [PaytmController::class, 'request'])->middleware('paytm');
+    Route::post('status', [PaytmController::class, 'status'])->middleware('paytm');
+    Route::any('callback', [PaytmController::class, 'callback']);
+    Route::any('webhook', [PaytmController::class, 'webhook']);
+
+    Route::prefix('sandbox')->group(function () {
+        Route::post('token', [PaytmSandboxController::class, 'token'])->middleware('paytm');
+        Route::post('create', [PaytmSandboxController::class, 'create'])->middleware('paytm');
+        Route::post('request', [PaytmSandboxController::class, 'request'])->middleware('paytm');
+        Route::post('status', [PaytmSandboxController::class, 'status'])->middleware('paytm');
+        Route::any('callback', [PaytmSandboxController::class, 'callback']);
+        Route::any('webhook', [PaytmSandboxController::class, 'webhook']);
+    });
+});
+
 Route::get('payout/request', [PayoutController::class, 'request']);
 
 Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
 Route::view('phonepe-demo', 'phonepe_demo');
+Route::view('paytm-demo', 'paytm_demo');
 
 // Route::get('payment-redirect', function (Request $request) {
 //     dd('dome');

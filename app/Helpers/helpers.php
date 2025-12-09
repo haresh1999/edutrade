@@ -31,4 +31,14 @@ function setting($key)
 
         return config("services.phonepe.production.{$key}");
     }
+
+    if (str_contains(url()->current(), 'paytm')) {
+
+        if (str_contains(url()->current(), 'sandbox')) {
+
+            return config("services.paytm.sandbox.{$key}");
+        }
+
+        return config("services.paytm.production.{$key}");
+    }
 }
