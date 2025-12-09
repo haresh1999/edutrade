@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         //     SabpaisaUserSeeder::class,
         //     RazorpayUserSeeder::class,
         //     PhonepeUserSeeder::class,
-        //     PaytmSeeder::class
+        //     PaytmUserSeeder::class
         // ]);
     }
 }
