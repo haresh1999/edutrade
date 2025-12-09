@@ -2,17 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 class PayoutController extends Controller
 {
-    public function request()
+    public function request(Request $request)
     {
+        $rules = Validator::make($request->all(), [
+            'mode' => ['required', 'in:imps'],
+            'amount' => ['required', 'numeric', 'min:100'],
+            'bene_name' => ['required', 'max:100'],
+            'bene_mobile' => ['required', 'digits_between:9,11'],
+            'bene_email' => ['required', 'email'],
+            'bene_acc' => ['required', 'numeric'],
+            'bene_ifsc' => ['required', 'max:50'],
+            'bene_acc_type' => ['required', 'in:saving'],
+            'bene_bank_name' => ['required', 'max:100'],
+        ]);
+
+        if ($rules->fails()) {
+
+            return response()->json($rules->errors()->toArray());
+        }
+
+        $input = $rules->validated();
+
         $curl = curl_init();
 
         $payload = [
-            'mode' => 'IMPS',
+            'mode' => strtoupper($input['mode']),
             'remarks' => 'rtesgt',
-            'amount' => '100',
+            'amount' => $input['amount'],
             'type' => '',
+<<<<<<< HEAD
             'bene_name' => 'CHAUHAN HARESHBHAI SURESHBHAI',
             'bene_mobile' => '9737314639',
             'bene_email' => 'hareshchauhan566@gmail.com',
@@ -21,6 +44,16 @@ class PayoutController extends Controller
             'bene_acc_type' => 'saving',
             'refid' => uniqid('TNX'),
             'bene_bank_name' => 'state bank of india',
+=======
+            'bene_name' => $input['bene_name'],
+            'bene_mobile' => $input['bene_mobile'],
+            'bene_email' => $input['bene_email'],
+            'bene_acc' => $input['bene_acc'],
+            'bene_ifsc' => $input['bene_ifsc'],
+            'bene_acc_type' => $input['bene_acc_type'],
+            'refid' => uniqid('TNX'),
+            'bene_bank_name' => $input['bene_bank_name'],
+>>>>>>> 49378519e95bbea34a02f440dac129765657dd5d
             'otp' => rand(111111, 999999)
         ];
 
