@@ -1,14 +1,16 @@
 <?php
 
-use App\Http\Controllers\PhonepeController;
-use App\Http\Controllers\PhonepeSandboxController;
-use App\Http\Controllers\RazorpayController;
-use App\Http\Controllers\RazorpaySandboxController;
-use App\Http\Controllers\SabpaisaController;
-use App\Http\Controllers\SabpaisaSandboxController;
-use App\Http\Controllers\PayoutController;
-use App\Http\Controllers\PaytmController;
-use App\Http\Controllers\PaytmSandboxController;
+use App\Http\Controllers\{
+    PhonepeController,
+    PhonepeSandboxController,
+    RazorpayController,
+    RazorpaySandboxController,
+    SabpaisaController,
+    SabpaisaSandboxController,
+    PaytmController,
+    PaytmSandboxController,
+};
+
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sabpaisa')->group(function () {
@@ -77,13 +79,10 @@ Route::prefix('paytm')->group(function () {
     });
 });
 
-Route::get('payout/request', [PayoutController::class, 'request']);
-Route::get('payout/status/{refid}', [PayoutController::class, 'status']);
-
-Route::view('sabpaisa-demo', 'sabpaisa_demo');
-Route::view('razorpay-demo', 'razorpay_demo');
-Route::view('phonepe-demo', 'phonepe_demo');
-Route::view('paytm-demo', 'paytm_demo');
+// Route::view('sabpaisa-demo', 'sabpaisa_demo');
+// Route::view('razorpay-demo', 'razorpay_demo');
+// Route::view('phonepe-demo', 'phonepe_demo');
+// Route::view('paytm-demo', 'paytm_demo');
 
 // Route::get('payment-redirect', function (Request $request) {
 //     dd('dome');

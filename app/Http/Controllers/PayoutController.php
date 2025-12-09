@@ -2,25 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 class PayoutController extends Controller
 {
-    public function request()
+    public function request(Request $request)
     {
+        $rules = Validator::make($request->all(), [
+            'mode' => ['required', 'in:imps'],
+            'amount' => ['required', 'numeric', 'min:100'],
+            'bene_name' => ['required', 'max:100'],
+            'bene_mobile' => ['required', 'digits_between:9,11'],
+            'bene_email' => ['required', 'email'],
+            'bene_acc' => ['required', 'numeric'],
+            'bene_ifsc' => ['required', 'max:50'],
+            'bene_acc_type' => ['required', 'in:saving'],
+            'bene_bank_name' => ['required', 'max:100'],
+        ]);
+
+        if ($rules->fails()) {
+
+            return response()->json($rules->errors()->toArray());
+        }
+
+        $input = $rules->validated();
+
         $curl = curl_init();
 
         $payload = [
-            'mode' => 'IMPS',
+            'mode' => strtoupper($input['mode']),
             'remarks' => 'rtesgt',
-            'amount' => '100',
+            'amount' => $input['amount'],
             'type' => '',
-            'bene_name' => 'CHAUHAN HARESHBHAI SURESHBHAI',
-            'bene_mobile' => '9737314639',
-            'bene_email' => 'hareshchauhan566@gmail.com',
-            'bene_acc' => '6550030962',
-            'bene_ifsc' => 'KKBK0003018',
-            'bene_acc_type' => 'saving',
+            'bene_name' => $input['bene_name'],
+            'bene_mobile' => $input['bene_mobile'],
+            'bene_email' => $input['bene_email'],
+            'bene_acc' => $input['bene_acc'],
+            'bene_ifsc' => $input['bene_ifsc'],
+            'bene_acc_type' => $input['bene_acc_type'],
             'refid' => uniqid('TNX'),
-            'bene_bank_name' => 'Kotak Mahindra Bank',
+            'bene_bank_name' => $input['bene_bank_name'],
             'otp' => rand(111111, 999999)
         ];
 
