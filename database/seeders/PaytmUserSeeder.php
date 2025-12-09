@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\PaytmUser;
 use Illuminate\Database\Seeder;
 
-class PaytmSeeder extends Seeder
+class PaytmUserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
