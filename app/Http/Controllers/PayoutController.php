@@ -17,7 +17,7 @@ class PayoutController extends Controller
             'bene_email' => ['required', 'email'],
             'bene_acc' => ['required', 'numeric'],
             'bene_ifsc' => ['required', 'max:50'],
-            'bene_acc_type' => ['required', 'in:saving'],
+            'bene_acc_type' => ['required', 'in:saving,current'],
             'bene_bank_name' => ['required', 'max:100'],
         ]);
 
