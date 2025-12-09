@@ -6,12 +6,14 @@ class PayoutController extends Controller
 {
     public function request()
     {
+        // return $this->status();
+
         $curl = curl_init();
 
         $payload = [
             'mode' => 'IMPS',
             'remarks' => 'rtesgt',
-            'amount' => '1',
+            'amount' => '100',
             'type' => '',
             'bene_name' => 'CHAUHAN HARESHBHAI SURESHBHAI',
             'bene_mobile' => '9737314639',
@@ -36,10 +38,42 @@ class PayoutController extends Controller
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'x-qro-userid: 9656132740',
+                'x-qro-userid: SBS537526',
                 'x-qro-apikey: 1CBAE4927FC2438C80B689170266442A'
             ],
         ]);
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+
+        return response()->json(json_decode($response));
+    }
+
+    public function status()
+    {
+        $payload = json_encode([
+            'refid' => 'TNX6932bd43ace2f'
+        ]);
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://softtechapi.in/api/payout/v3/StatusEnquiry',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'x-qro-userid: SBS537526',
+                'x-qro-apikey: 1CBAE4927FC2438C80B689170266442A'
+            ],
+        ));
 
         $response = curl_exec($curl);
 
