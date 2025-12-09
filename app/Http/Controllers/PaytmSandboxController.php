@@ -39,6 +39,10 @@ class PaytmSandboxController extends Controller
 
         $actionUrl = env('APP_URL') . '/paytm/sandbox/request';
 
+        $token = str()->random(100);
+
+        PaytmUser::where('id', $userId)->update(['refresh_token' => $token]);
+
         return view('paytm.request', compact('actionUrl', 'input', 'userId'));
     }
 
