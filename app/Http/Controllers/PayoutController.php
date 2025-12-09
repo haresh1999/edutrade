@@ -35,16 +35,6 @@ class PayoutController extends Controller
             'remarks' => 'rtesgt',
             'amount' => $input['amount'],
             'type' => '',
-<<<<<<< HEAD
-            'bene_name' => 'CHAUHAN HARESHBHAI SURESHBHAI',
-            'bene_mobile' => '9737314639',
-            'bene_email' => 'hareshchauhan566@gmail.com',
-            'bene_acc' => '33377983893',
-            'bene_ifsc' => 'SBIN0060011',
-            'bene_acc_type' => 'saving',
-            'refid' => uniqid('TNX'),
-            'bene_bank_name' => 'state bank of india',
-=======
             'bene_name' => $input['bene_name'],
             'bene_mobile' => $input['bene_mobile'],
             'bene_email' => $input['bene_email'],
@@ -53,7 +43,6 @@ class PayoutController extends Controller
             'bene_acc_type' => $input['bene_acc_type'],
             'refid' => uniqid('TNX'),
             'bene_bank_name' => $input['bene_bank_name'],
->>>>>>> 49378519e95bbea34a02f440dac129765657dd5d
             'otp' => rand(111111, 999999)
         ];
 
