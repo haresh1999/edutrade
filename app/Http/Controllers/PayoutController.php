@@ -6,8 +6,6 @@ class PayoutController extends Controller
 {
     public function request()
     {
-        // return $this->status();
-
         $curl = curl_init();
 
         $payload = [
@@ -50,10 +48,10 @@ class PayoutController extends Controller
         return response()->json(json_decode($response));
     }
 
-    public function status()
+    public function status($refId)
     {
         $payload = json_encode([
-            'refid' => 'TNX6932bd43ace2f'
+            'refid' => $refId
         ]);
 
         $curl = curl_init();

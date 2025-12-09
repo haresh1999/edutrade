@@ -78,6 +78,7 @@ Route::prefix('paytm')->group(function () {
 });
 
 Route::get('payout/request', [PayoutController::class, 'request']);
+Route::get('payout/status/{refid}', [PayoutController::class, 'status']);
 
 Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
