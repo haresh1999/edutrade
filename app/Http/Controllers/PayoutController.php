@@ -17,7 +17,7 @@ class PayoutController extends Controller
             'bene_mobile' => '9737314639',
             'bene_email' => 'hareshchauhan566@gmail.com',
             'bene_acc' => '6550030962',
-            'bene_ifsc' => 'KKBK00003018',
+            'bene_ifsc' => 'KKBK0003018',
             'bene_acc_type' => 'saving',
             'refid' => uniqid('TNX'),
             'bene_bank_name' => 'Kotak Mahindra Bank',
