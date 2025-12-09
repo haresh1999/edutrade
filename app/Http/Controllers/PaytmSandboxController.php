@@ -43,7 +43,7 @@ class PaytmSandboxController extends Controller
 
         PaytmUser::where('id', $userId)->update(['refresh_token' => $token]);
 
-        return view('paytm.request', compact('actionUrl', 'input', 'userId'));
+        return view('paytm.request', compact('actionUrl', 'input', 'userId', 'token'));
     }
 
     public function request(Request $request)
