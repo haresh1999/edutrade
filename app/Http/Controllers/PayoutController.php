@@ -16,11 +16,11 @@ class PayoutController extends Controller
             'bene_name' => 'CHAUHAN HARESHBHAI SURESHBHAI',
             'bene_mobile' => '9737314639',
             'bene_email' => 'hareshchauhan566@gmail.com',
-            'bene_acc' => '6550030962',
-            'bene_ifsc' => 'KKBK0003018',
+            'bene_acc' => '33377983893',
+            'bene_ifsc' => 'SBIN0060011',
             'bene_acc_type' => 'saving',
             'refid' => uniqid('TNX'),
-            'bene_bank_name' => 'Kotak Mahindra Bank',
+            'bene_bank_name' => 'state bank of india',
             'otp' => rand(111111, 999999)
         ];
 
