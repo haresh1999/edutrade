@@ -80,7 +80,7 @@ Route::prefix('paytm')->group(function () {
 });
 
 // Route::view('sabpaisa-demo', 'sabpaisa_demo');
-Route::view('razorpay-demo', 'razorpay_demo');
+// Route::view('razorpay-demo', 'razorpay_demo');
 // Route::view('phonepe-demo', 'phonepe_demo');
 // Route::view('paytm-demo', 'paytm_demo');
 
