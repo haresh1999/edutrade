@@ -57,11 +57,13 @@ return [
         'user' => [],
         'sandbox' => [
             'key_id' => 'rzp_test_RXE0uWen59xOZ0',
-            'key_secret' => 'PRq5jSWVM7VvKc5fqEdaqhWn'
+            'key_secret' => 'PRq5jSWVM7VvKc5fqEdaqhWn',
+            'key_sign' => ''
         ],
         'production' => [
             'key_id' => 'rzp_live_RTIzeZS7Q22shx',
-            'key_secret' => 'nca3Agw8XlpW95Hfmp4et4al'
+            'key_secret' => 'nca3Agw8XlpW95Hfmp4et4al',
+            'key_sign' => ''
         ],
     ],
 

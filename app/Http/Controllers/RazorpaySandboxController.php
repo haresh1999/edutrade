@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RazorpaySandboxOrder;
 use App\Models\RazorpayUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,7 @@ class RazorpaySandboxController extends Controller
     {
         $userId = config('services.razorpay.user.id');
 
-        $token = str()->random(100);
+        $token = str()->uuid();
 
         RazorpayUser::where('id', $userId)->update(['refresh_token' => $token]);
 
@@ -43,7 +44,7 @@ class RazorpaySandboxController extends Controller
             "amount" => $amount,
             "currency" => "INR",
             "accept_partial" => false,
-            "description" => "Test payment link via cURL",
+            "description" => "Test Order Payment Edutrade",
             "customer" => [
                 "name" => $input['payer_name'],
                 "email" => $input['payer_email'],
@@ -149,6 +150,11 @@ class RazorpaySandboxController extends Controller
         ]);
     }
 
+    public function webhook($url, $data)
+    {
+        return Http::post($url, $data);
+    }
+
     public function callback(Request $request)
     {
         if ($request->has('order_id') && $request->has('razorpay_payment_link_id')) {
@@ -173,7 +179,12 @@ class RazorpaySandboxController extends Controller
                 'status' => $order->status
             ]);
 
-            $backUrl = "{$order->user->callback_url}?response={$sendData}";
+            if (! is_null($order->user->callback_url)) {
+
+                $this->webhook($order->user->callback_url, $sendData);
+            }
+
+            $backUrl = "{$order->user->redirect_url}?response={$sendData}";
 
             return redirect()->to($backUrl);
         }
@@ -182,10 +193,5 @@ class RazorpaySandboxController extends Controller
             'status' => 'error',
             'message' => 'Something went wrong!, Unable to handle response',
         ], 401);
-    }
-
-    public function webhook()
-    {
-        //
     }
 }
