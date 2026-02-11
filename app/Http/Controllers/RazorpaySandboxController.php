@@ -195,11 +195,7 @@ class RazorpaySandboxController extends Controller
                 $this->webhook($order->user->callback_url, $sendData);
             }
 
-            $data = json_encode($sendData);
-
-            $backUrl = "{$order->user->redirect_url}?response={$data}";
-
-            return redirect()->to($backUrl);
+            return redirect()->to($order->user->redirect_url);
         }
 
         return response()->json([
