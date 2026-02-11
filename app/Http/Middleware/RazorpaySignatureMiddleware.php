@@ -17,28 +17,33 @@ class RazorpaySignatureMiddleware
     {
         $currentUrl = url()->current();
 
-        $is_sandbox = str_contains($currentUrl, 'sandbox');
+        $env = str_contains($currentUrl, 'sandbox') ? 'sandbox' : 'production';
 
-        $secret = config("services.razorpay.{$is_sandbox}.key_sign");
+        $secret = config("services.razorpay.{$env}.key_sign");
 
-        // 1. Get raw body (VERY IMPORTANT)
-        $payload = $request->getContent();
+        $payload = $request->except('signature');
 
-        // 2. Get signature from header
-        $receivedSignature = $request->header('X-Provider-Signature');
+        ksort($payload);
+
+        $payloadQueryString = http_build_query($payload);
+
+        $receivedSignature = $request->signature ?? '';
 
         if (!$receivedSignature) {
-
-            return response()->json(['error' => 'Signature missing'], 401);
+            return response()->json([
+                'status' => false,
+                'error' => 'Signature missing or invalid signature provided'
+            ], 401);
         }
 
-        // 3. Generate signature
-        $calculatedSignature = hash_hmac('sha256', $payload, $secret);
+        $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
 
-        // 4. Timing-safe comparison
         if (!hash_equals($calculatedSignature, $receivedSignature)) {
 
-            return response()->json(['error' => 'Invalid signature'], 401);
+            return response()->json([
+                'status' => false,
+                'error' => 'Invalid signature'
+            ], 401);
         }
 
         return $next($request);

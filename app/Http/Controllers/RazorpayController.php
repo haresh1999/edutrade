@@ -152,7 +152,18 @@ class RazorpayController extends Controller
 
     public function webhook($url, $data)
     {
-        return Http::post($url, $data);
+        ksort($data);
+
+        $payloadQueryString = http_build_query($data);
+
+        $secret = config('services.razorpay.production.key_sign');
+
+        $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
+
+        return Http::withHeaders([
+            'X-Provider-Signature' => $calculatedSignature,
+            'Content-Type' => 'application/x-www-form-urlencoded'
+        ])->post($url, $data);
     }
 
     public function callback(Request $request)
@@ -172,19 +183,21 @@ class RazorpayController extends Controller
 
             $order = RazorpayOrder::with('user')->where('order_id', $request->order_id)->first();
 
-            $sendData = json_encode([
+            $sendData = [
                 'order_id' => $order->order_id,
                 'tnx_id' => $order->tnx_id,
                 'amount' => $order->amount,
                 'status' => $order->status
-            ]);
+            ];
 
             if (! is_null($order->user->callback_url)) {
 
                 $this->webhook($order->user->callback_url, $sendData);
             }
 
-            $backUrl = "{$order->user->redirect_url}?response={$sendData}";
+            $data = json_encode($sendData);
+
+            $backUrl = "{$order->user->redirect_url}?response={$data}";
 
             return redirect()->to($backUrl);
         }

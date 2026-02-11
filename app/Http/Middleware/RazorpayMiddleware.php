@@ -17,10 +17,9 @@ class RazorpayMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $currentUrl = url()->current();
-
         $clientId = $request->header('client-id');
         $clientSecret = $request->header('client-secret');
-        $refreshToken = $request->bearerToken();
+        $refreshToken = $request->get('refresh_token');
         $is_sandbox = str_contains($currentUrl, 'sandbox');
 
         $user = RazorpayUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret, $refreshToken, $currentUrl) {
@@ -47,7 +46,7 @@ class RazorpayMiddleware
 
         config(['services.razorpay.user' => $user->toArray()]);
 
-        $user->update(['refresh_token' => null]);
+        // $user->update(['refresh_token' => null]);
 
         return $next($request);
     }

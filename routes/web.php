@@ -31,7 +31,7 @@ Route::prefix('sabpaisa')->group(function () {
 Route::prefix('razorpay')->group(function () {
     Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
     Route::post('request', [RazorpayController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-    Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+    Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
     Route::post('callback', [RazorpayController::class, 'callback'])->middleware(['throttle:60,1']);
     Route::post('webhook', [RazorpayController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
 });
@@ -39,7 +39,7 @@ Route::prefix('razorpay')->group(function () {
 Route::prefix('razorpay/sandbox')->group(function () {
     Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
     Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-    Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+    Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
     Route::post('callback', [RazorpaySandboxController::class, 'callback'])->middleware(['throttle:60,1']);
     Route::post('webhook', [RazorpaySandboxController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
 });
@@ -96,10 +96,10 @@ Route::prefix('paytm')->group(function () {
     });
 });
 
-// Route::view('sabpaisa-demo', 'sabpaisa_demo');
-// Route::view('razorpay-demo', 'razorpay_demo');
-// Route::view('phonepe-demo', 'phonepe_demo');
-// Route::view('paytm-demo', 'paytm_demo');
+Route::view('sabpaisa-demo', 'sabpaisa_demo');
+Route::view('razorpay-demo', 'razorpay_demo');
+Route::view('phonepe-demo', 'phonepe_demo');
+Route::view('paytm-demo', 'paytm_demo');
 
 // Route::get('payment-redirect', function (Request $request) {
 //     dd('dome');
@@ -117,3 +117,37 @@ Route::prefix('paytm')->group(function () {
 //         'status' => 'success'
 //     ]);
 // });
+
+
+// Route::get('generate-sign', function () {
+
+//     $secret = config("services.razorpay.production.key_sign");
+
+//     $payload = [
+//         "amount" => "1",
+//         "order_id" => "000123",
+//         "payer_email" => "hareshc1999@gmail.com",
+//         "payer_mobile" => "9106029220",
+//         "payer_name" => "Haresh",
+//         "refresh_token" => "3872e239-2c8c-48da-9ec9-eb6175aa4032",
+//     ];
+
+//     $payloadQueryString = http_build_query($payload);
+
+//     $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
+
+//     dd($calculatedSignature);
+// });
+
+
+// $signature = $request->header('X-Provider-Signature');
+
+// $data = $request->all();
+
+// ksort($data);
+
+// $payload = http_build_query($data);
+
+// $expected = hash_hmac('sha256', $payload, $secret);
+
+// hash_equals($expected, $signature);
