@@ -24,6 +24,71 @@ class RazorpayController extends Controller
         ]);
     }
 
+    public function getOrderId(Request $request)
+    {
+        $request->validate([
+            'id' => ['required', 'integer', 'exists:razorpay_sandbox_orders,id']
+        ]);
+
+        $tnx = RazorpaySandboxOrder::findOrFail($request->id);
+
+        $keyId = setting('key_id');
+        $keySecret = setting('key_secret');
+
+        $amount   = (int) ($tnx->amount * 100);
+        $currency = "INR";
+
+        $data = [
+            "amount" => $amount,
+            "currency" => $currency,
+            "payment_capture" => 1,
+            "notes" => [
+                "woocommerce_order_id" => $tnx->order_id,
+                "woocommerce_order_number" => $tnx->order_id
+            ],
+        ];
+
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => "https://api.razorpay.com/v1/orders",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_USERPWD => $keyId . ":" . $keySecret,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json"
+            ],
+            CURLOPT_POSTFIELDS => json_encode($data)
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if (curl_errno($ch)) {
+            curl_close($ch);
+            return response()->json([
+                'error' => true,
+                'message' => curl_error($ch)
+            ], 500);
+        }
+
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+
+        $tnx->update(['request_response' => json_encode($result)]);
+
+        if ($httpCode === 200 && isset($result['id'])) {
+            return  response()->json($result['id']);
+        } else {
+
+            return response()->json([
+                'error' => true,
+                'razorpay_response' => $result
+            ], 400);
+        }
+    }
+
     public function request(Request $request)
     {
         $userId = config('services.razorpay.user.id');
@@ -120,6 +185,13 @@ class RazorpayController extends Controller
             ], 401);
         }
     }
+
+    // public function getOrderId(Request $request)
+    // {
+    //     $request->validate([
+    //         'id'  => ['required','integer','exists:']
+    //     ]);
+    // }
 
     public function status(Request $request)
     {

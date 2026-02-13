@@ -30,7 +30,9 @@ Route::prefix('sabpaisa')->group(function () {
 
 Route::prefix('razorpay')->group(function () {
     Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
+    Route::post('get/order-id', [RazorpayController::class, 'getOrderId']);
     Route::post('request', [RazorpayController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+    Route::get('checkout/order-pay/{id}', [RazorpayController::class, 'orderPay']);
     Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
     Route::post('callback', [RazorpayController::class, 'callback'])->middleware(['throttle:60,1']);
     Route::post('webhook', [RazorpayController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
@@ -38,7 +40,9 @@ Route::prefix('razorpay')->group(function () {
 
 Route::prefix('razorpay/sandbox')->group(function () {
     Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
+    Route::post('get/order-id', [RazorpaySandboxController::class, 'getOrderId']);
     Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+    Route::get('checkout/order-pay/{id}', [RazorpaySandboxController::class, 'orderPay']);
     Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
     Route::post('callback', [RazorpaySandboxController::class, 'callback'])->middleware(['throttle:60,1']);
     Route::post('webhook', [RazorpaySandboxController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
@@ -125,11 +129,11 @@ Route::view('razorpay-demo', 'razorpay_demo');
 
 //     $payload = [
 //         "amount" => "1",
-//         "order_id" => "5546654",
+//         "order_id" => "5546655",
 //         "payer_email" => "hareshc1999@gmail.com",
 //         "payer_mobile" => "9106029220",
 //         "payer_name" => "Haresh",
-//         "refresh_token" => "a1c6d0a9-64d3-4278-af35-df9578b3e0fd",
+//         "refresh_token" => "9d72a500-f00c-4100-833f-26bbe0aedaa8",
 //     ];
 
 //     ksort($payload);

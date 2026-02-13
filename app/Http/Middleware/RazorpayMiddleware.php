@@ -46,7 +46,7 @@ class RazorpayMiddleware
 
         config(['services.razorpay.user' => $user->toArray()]);
 
-        $user->update(['refresh_token' => null]);
+        // $user->update(['refresh_token' => null]);
 
         return $next($request);
     }
