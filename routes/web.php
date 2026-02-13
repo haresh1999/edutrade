@@ -96,10 +96,10 @@ Route::prefix('paytm')->group(function () {
     });
 });
 
-Route::view('sabpaisa-demo', 'sabpaisa_demo');
+// Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
-Route::view('phonepe-demo', 'phonepe_demo');
-Route::view('paytm-demo', 'paytm_demo');
+// Route::view('phonepe-demo', 'phonepe_demo');
+// Route::view('paytm-demo', 'paytm_demo');
 
 // Route::get('payment-redirect', function (Request $request) {
 //     dd('dome');
@@ -121,16 +121,18 @@ Route::view('paytm-demo', 'paytm_demo');
 
 // Route::get('generate-sign', function () {
 
-//     $secret = config("services.razorpay.production.key_sign");
+//     $secret = config("services.razorpay.sandbox.key_sign");
 
 //     $payload = [
 //         "amount" => "1",
-//         "order_id" => "000123",
+//         "order_id" => "5546654",
 //         "payer_email" => "hareshc1999@gmail.com",
 //         "payer_mobile" => "9106029220",
 //         "payer_name" => "Haresh",
-//         "refresh_token" => "3872e239-2c8c-48da-9ec9-eb6175aa4032",
+//         "refresh_token" => "a1c6d0a9-64d3-4278-af35-df9578b3e0fd",
 //     ];
+
+//     ksort($payload);
 
 //     $payloadQueryString = http_build_query($payload);
 

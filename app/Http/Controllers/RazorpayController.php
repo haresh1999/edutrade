@@ -44,7 +44,11 @@ class RazorpayController extends Controller
             "amount" => $amount,
             "currency" => "INR",
             "accept_partial" => false,
-            "description" => "Order Payment Edutrade",
+            "description" => "Order " . $input['order_id'],
+            "notes" => [
+                "woocommerce_order_id" => $input['order_id'],
+                "woocommerce_order_number" => $input['order_id']
+            ],
             "customer" => [
                 "name" => $input['payer_name'],
                 "email" => $input['payer_email'],
