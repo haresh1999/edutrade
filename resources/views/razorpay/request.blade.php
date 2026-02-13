@@ -27,7 +27,7 @@
                         "amount": "{{$input['amount']}}",
                         "currency": "INR",
                         "name": "Edutrade",
-                        "description": "Order {{ $input['order_id'] }}",
+                        "description": "Order {{ $input['tnx_id'] }}",
                     
                         "image": "https://edutrade.in/wp-content/uploads/2025/09/cropped-cropped-Screenshot-2025-09-03-111318.png",
                         "order_id": result,

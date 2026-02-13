@@ -43,8 +43,8 @@ class RazorpaySandboxController extends Controller
             "currency" => $currency,
             "payment_capture" => 1,
             "notes" => [
-                "woocommerce_order_id" => $tnx->order_id,
-                "woocommerce_order_number" => $tnx->order_id
+                "woocommerce_order_id" => $tnx->id,
+                "woocommerce_order_number" => $tnx->id
             ],
         ];
 
