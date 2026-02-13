@@ -15,36 +15,36 @@ class RazorpaySignatureMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // $currentUrl = url()->current();
+        $currentUrl = url()->current();
 
-        // $env = str_contains($currentUrl, 'sandbox') ? 'sandbox' : 'production';
+        $env = str_contains($currentUrl, 'sandbox') ? 'sandbox' : 'production';
 
-        // $secret = config("services.razorpay.{$env}.key_sign");
+        $secret = config("services.razorpay.{$env}.key_sign");
 
-        // $payload = $request->except('signature');
+        $payload = $request->except('signature');
 
-        // ksort($payload);
+        ksort($payload);
 
-        // $payloadQueryString = http_build_query($payload);
+        $payloadQueryString = http_build_query($payload);
 
-        // $receivedSignature = $request->signature ?? '';
+        $receivedSignature = $request->signature ?? '';
 
-        // if (!$receivedSignature) {
-        //     return response()->json([
-        //         'status' => false,
-        //         'error' => 'Signature missing or invalid signature provided'
-        //     ], 401);
-        // }
+        if (!$receivedSignature) {
+            return response()->json([
+                'status' => false,
+                'error' => 'Signature missing or invalid signature provided'
+            ], 401);
+        }
 
-        // $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
+        $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
 
-        // if (!hash_equals($calculatedSignature, $receivedSignature)) {
+        if (!hash_equals($calculatedSignature, $receivedSignature)) {
 
-        //     return response()->json([
-        //         'status' => false,
-        //         'error' => 'Invalid signature'
-        //     ], 401);
-        // }
+            return response()->json([
+                'status' => false,
+                'error' => 'Invalid signature'
+            ], 401);
+        }
 
         return $next($request);
     }

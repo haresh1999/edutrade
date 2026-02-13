@@ -247,11 +247,13 @@ class RazorpaySandboxController extends Controller
             'status' => $tnx->status
         ];
 
-        if (! is_null($order->user->callback_url)) {
+        if (! is_null($tnx->user->callback_url)) {
 
-            $this->webhook($order->user->callback_url, $sendData);
+            $this->webhook($tnx->user->callback_url, $sendData);
         }
 
-        return redirect()->to($order->user->redirect_url);
+        $status = $tnx->status;
+
+        return redirect()->to($tnx->user->redirect_url . '?status=' . $status);
     }
 }

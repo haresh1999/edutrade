@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Edutrade - Payment Page</title>
 </head>
-<p>Please wait while we are opening the payment page.</p>
+<p>Please wait while we are opening the payment screen.</p>
 
 <body>
     <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
