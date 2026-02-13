@@ -125,15 +125,15 @@ Route::view('razorpay-demo', 'razorpay_demo');
 
 // Route::get('generate-sign', function () {
 
-//     $secret = config("services.razorpay.sandbox.key_sign");
+//     $secret = config("services.razorpay.production.key_sign");
 
 //     $payload = [
 //         "amount" => "1",
-//         "order_id" => "5546655",
+//         "order_id" => "P7vjxZLp4x",
 //         "payer_email" => "hareshc1999@gmail.com",
 //         "payer_mobile" => "9106029220",
 //         "payer_name" => "Haresh",
-//         "refresh_token" => "9d72a500-f00c-4100-833f-26bbe0aedaa8",
+//         "refresh_token" => "8ad84a4c-a2c2-4e00-8d21-5d8d656fe5c7",
 //     ];
 
 //     ksort($payload);
