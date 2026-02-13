@@ -27,7 +27,7 @@ class RazorpayController extends Controller
     public function getOrderId(Request $request)
     {
         $request->validate([
-            'id' => ['required', 'integer', 'exists:razorpay_sandbox_orders,id']
+            'id' => ['required', 'integer', 'exists:razorpay_orders,id']
         ]);
 
         $tnx = RazorpayOrder::findOrFail($request->id);
