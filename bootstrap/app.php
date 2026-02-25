@@ -1,15 +1,24 @@
 <?php
 
-use App\Http\Middleware\PaytmMiddleware;
-use App\Http\Middleware\PhonepeMiddleware;
-use App\Http\Middleware\RazorpayMiddleware;
-use App\Http\Middleware\SabpaisaMiddleware;
+use App\Http\Middleware\{
+    PayoutMiddleware,
+    PaytmMiddleware,
+    PhonepeMiddleware,
+    RazorpayMiddleware,
+    RazorpaySignatureMiddleware,
+    SabpaisaMiddleware,
+};
+
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+
+use Illuminate\Foundation\Configuration\{
+    Exceptions,
+    Middleware
+};
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        api: __DIR__ . '/../routes/api.php',
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
@@ -18,8 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'sabpaisa' => SabpaisaMiddleware::class,
             'razorpay' => RazorpayMiddleware::class,
+            'razorpay.sign' => RazorpaySignatureMiddleware::class,
             'phonepe' => PhonepeMiddleware::class,
             'paytm' => PaytmMiddleware::class,
+            'payout' => PayoutMiddleware::class,
         ])->validateCsrfTokens(except: [
             'sabpaisa/*',
             'razorpay/*',

@@ -1,14 +1,16 @@
 <?php
 
-use App\Http\Controllers\PhonepeController;
-use App\Http\Controllers\PhonepeSandboxController;
-use App\Http\Controllers\RazorpayController;
-use App\Http\Controllers\RazorpaySandboxController;
-use App\Http\Controllers\SabpaisaController;
-use App\Http\Controllers\SabpaisaSandboxController;
-use App\Http\Controllers\PayoutController;
-use App\Http\Controllers\PaytmController;
-use App\Http\Controllers\PaytmSandboxController;
+use App\Http\Controllers\{
+    PhonepeController,
+    PhonepeSandboxController,
+    RazorpayController,
+    RazorpaySandboxController,
+    SabpaisaController,
+    SabpaisaSandboxController,
+    PaytmController,
+    PaytmSandboxController,
+};
+
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sabpaisa')->group(function () {
@@ -25,21 +27,42 @@ Route::prefix('sabpaisa')->group(function () {
     });
 });
 
+
 Route::prefix('razorpay')->group(function () {
     Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
-    Route::post('request', [RazorpayController::class, 'request'])->middleware('razorpay');
-    Route::post('status', [RazorpayController::class, 'status'])->middleware('razorpay');
-    Route::any('callback', [RazorpayController::class, 'callback']);
-    Route::any('webhook', [RazorpayController::class, 'webhook']);
-
-    Route::prefix('sandbox')->group(function () {
-        Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
-        Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware('razorpay');
-        Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware('razorpay');
-        Route::any('callback', [RazorpaySandboxController::class, 'callback']);
-        Route::any('webhook', [RazorpaySandboxController::class, 'webhook']);
-    });
+    Route::post('get/order-id', [RazorpayController::class, 'getOrderId']);
+    Route::post('request', [RazorpayController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+    Route::get('checkout/order-pay/{id}', [RazorpayController::class, 'orderPay']);
+    Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
+    Route::post('callback', [RazorpayController::class, 'callback'])->middleware(['throttle:60,1']);
+    Route::post('webhook', [RazorpayController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
 });
+
+Route::prefix('razorpay/sandbox')->group(function () {
+    Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
+    Route::post('get/order-id', [RazorpaySandboxController::class, 'getOrderId']);
+    Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+    Route::get('checkout/order-pay/{id}', [RazorpaySandboxController::class, 'orderPay']);
+    Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
+    Route::post('callback', [RazorpaySandboxController::class, 'callback'])->middleware(['throttle:60,1']);
+    Route::post('webhook', [RazorpaySandboxController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
+});
+
+// Route::prefix('razorpay')->group(function () {
+//     Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
+//     Route::post('request', [RazorpayController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+//     Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+//     Route::match(['get', 'post'], 'callback', [RazorpayController::class, 'callback']);
+//     Route::match(['get', 'post'], 'webhook', [RazorpayController::class, 'webhook']);
+
+//     Route::prefix('sandbox')->group(function () {
+//         Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
+//         Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+//         Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
+//         Route::match(['get', 'post'], 'callback', [RazorpaySandboxController::class, 'callback']);
+//         Route::match(['get', 'post'], 'webhook', [RazorpaySandboxController::class, 'webhook']);
+//     });
+// });
 
 Route::prefix('phonepe')->group(function () {
     Route::post('token', [PhonepeController::class, 'token'])->middleware('phonepe');
@@ -77,13 +100,10 @@ Route::prefix('paytm')->group(function () {
     });
 });
 
-Route::get('payout/request', [PayoutController::class, 'request']);
-Route::get('payout/status/{refid}', [PayoutController::class, 'status']);
-
-Route::view('sabpaisa-demo', 'sabpaisa_demo');
+// Route::view('sabpaisa-demo', 'sabpaisa_demo');
 Route::view('razorpay-demo', 'razorpay_demo');
-Route::view('phonepe-demo', 'phonepe_demo');
-Route::view('paytm-demo', 'paytm_demo');
+// Route::view('phonepe-demo', 'phonepe_demo');
+// Route::view('paytm-demo', 'paytm_demo');
 
 // Route::get('payment-redirect', function (Request $request) {
 //     dd('dome');
@@ -101,3 +121,39 @@ Route::view('paytm-demo', 'paytm_demo');
 //         'status' => 'success'
 //     ]);
 // });
+
+
+// Route::get('generate-sign', function () {
+
+//     $secret = config("services.razorpay.production.key_sign");
+
+//     $payload = [
+//         "amount" => "1",
+//         "order_id" => "P7vjxZLp4x",
+//         "payer_email" => "hareshc1999@gmail.com",
+//         "payer_mobile" => "9106029220",
+//         "payer_name" => "Haresh",
+//         "refresh_token" => "8ad84a4c-a2c2-4e00-8d21-5d8d656fe5c7",
+//     ];
+
+//     ksort($payload);
+
+//     $payloadQueryString = http_build_query($payload);
+
+//     $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
+
+//     dd($calculatedSignature);
+// });
+
+
+// $signature = $request->header('X-Provider-Signature');
+
+// $data = $request->all();
+
+// ksort($data);
+
+// $payload = http_build_query($data);
+
+// $expected = hash_hmac('sha256', $payload, $secret);
+
+// hash_equals($expected, $signature);
