@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RazorpayOrder;
-use App\Models\RazorpayUser;
+use App\Models\RazorpayToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
@@ -15,9 +15,12 @@ class RazorpayController extends Controller
     {
         $userId = config('services.razorpay.user.id');
 
-        $token = str()->uuid();
+        $token = str()->uuid() . '-' . $userId;
 
-        RazorpayUser::where('id', $userId)->update(['refresh_token' => $token]);
+        RazorpayToken::create([
+            'user_id' => $userId,
+            'token' => $token
+        ]);
 
         return response()->json([
             'refresh_token' => $token

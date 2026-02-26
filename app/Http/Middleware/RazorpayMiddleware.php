@@ -2,9 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\RazorpaySandboxToken;
+use App\Models\RazorpayToken;
 use App\Models\RazorpayUser;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
 class RazorpayMiddleware
@@ -17,24 +20,57 @@ class RazorpayMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $currentUrl = url()->current();
-        $clientId = $request->header('client-id');
-        $clientSecret = $request->header('client-secret');
-        $refreshToken = $request->get('refresh_token');
         $is_sandbox = str_contains($currentUrl, 'sandbox');
 
-        $user = RazorpayUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret, $refreshToken, $currentUrl) {
-            if (str_contains($currentUrl, 'token')) {
+        if (str_contains($currentUrl, 'token')) {
+            $clientId = $request->header('client-id');
+            $clientSecret = $request->header('client-secret');
+            $user = RazorpayUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret) {
                 $query->where('sandbox_client_id', $clientId)->where('sandbox_client_secret', $clientSecret);
-            } else {
-                $query->where('refresh_token', $refreshToken);
-            }
-        }, function ($query) use ($clientId, $clientSecret, $refreshToken, $currentUrl) {
-            if (str_contains($currentUrl, 'token')) {
+            }, function ($query) use ($clientId, $clientSecret) {
                 $query->where('client_id', $clientId)->where('client_secret', $clientSecret);
+            })->first();
+        } else {
+            $refreshToken = $request->get('refresh_token');
+            if (str_contains($refreshToken, '-')) {
+                $seperation = explode('-', $refreshToken);
+                $user_id = end($seperation);
+                if ($is_sandbox) {
+
+                    RazorpaySandboxToken::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
+
+                    $token = RazorpaySandboxToken::where('user_id', $user_id)
+                        ->where('token', $refreshToken)
+                        ->where('created_at', '>=', Carbon::now()->subMinutes(5))
+                        ->first();
+                } else {
+
+                    RazorpayToken::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
+
+                    $token = RazorpayToken::where('user_id', $user_id)
+                        ->where('token', $refreshToken)
+                        ->where('created_at', '>=', Carbon::now()->subMinutes(5))
+                        ->first();
+                }
+
+                if (is_null($token) || ! isset($token->user_id)) {
+
+                    return response()->json([
+                        'error' => 'Unauthorized',
+                        'message' => 'Invalid client credentials.'
+                    ], 401);
+                }
+
+                $user = RazorpayUser::find($token->user_id);
+
+                $token->delete();
             } else {
-                $query->where('refresh_token', $refreshToken);
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'Invalid token format'
+                ], 400);
             }
-        })->first();
+        }
 
         if (is_null($user)) {
 
@@ -45,8 +81,6 @@ class RazorpayMiddleware
         }
 
         config(['services.razorpay.user' => $user->toArray()]);
-
-        $user->update(['refresh_token' => null]);
 
         return $next($request);
     }
