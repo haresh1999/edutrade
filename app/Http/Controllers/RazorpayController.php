@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RazorpayOrder;
 use App\Models\RazorpayToken;
+use App\Models\RazorpayUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
@@ -102,6 +103,8 @@ class RazorpayController extends Controller
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
             'payer_mobile' => ['required', 'digits_between:9,11'],
+            'callback_url' => ['required', 'url'],
+            'redirect_url' => ['required', 'url'],
         ]);
 
         $tnx = RazorpayOrder::create([
@@ -112,7 +115,11 @@ class RazorpayController extends Controller
             'payer_email' => $input['payer_email'],
             'payer_mobile' => $input['payer_mobile'],
             'request_response' => json_encode([]),
+        ]);
 
+        RazorpayUser::where('id', $userId)->update([
+            'callback_url' => $input['callback_url'],
+            'redirect_url' => $input['redirect_url']
         ]);
 
         $string = str()->random(13);

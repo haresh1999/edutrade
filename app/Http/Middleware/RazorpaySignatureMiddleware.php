@@ -21,7 +21,7 @@ class RazorpaySignatureMiddleware
 
         $secret = config("services.razorpay.{$env}.key_sign");
 
-        $payload = $request->except('signature');
+        $payload = $request->except(['signature', 'callback_url', 'redirect_url']);
 
         ksort($payload);
 
