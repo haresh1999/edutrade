@@ -106,7 +106,7 @@ class RazorpaySandboxController extends Controller
             'amount' => ['required', 'numeric', 'min:1'],
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
-            'payer_mobile' => ['required', 'digits_between:9,11'],
+            'payer_mobile' => ['required', 'digits:10'],
             'callback_url' => ['required', 'url'],
             'redirect_url' => ['required', 'url'],
         ]);
