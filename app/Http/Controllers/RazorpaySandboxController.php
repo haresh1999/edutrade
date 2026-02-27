@@ -97,8 +97,12 @@ class RazorpaySandboxController extends Controller
     {
         $userId = config('services.razorpay.user.id');
 
-        $input = $request->validate([
-            'order_id' => ['required', 'string', Rule::unique('razorpay_sandbox_orders', 'order_id')->where('user_id', $userId)],
+        $validator = Validator::make($request->all(), [
+            'order_id' => [
+                'required',
+                'string',
+                Rule::unique('razorpay_sandbox_orders', 'order_id')->where('user_id', $userId)
+            ],
             'amount' => ['required', 'numeric', 'min:1'],
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
@@ -106,6 +110,16 @@ class RazorpaySandboxController extends Controller
             'callback_url' => ['required', 'url'],
             'redirect_url' => ['required', 'url'],
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $input = $validator->validated();
 
         $tnx = RazorpaySandboxOrder::create([
             'user_id' => $userId,
