@@ -247,7 +247,7 @@ class RazorpaySandboxController extends Controller
             if ($status === 'captured') {
 
                 $order->update([
-                    'refund_response' => json_encode($result),
+                    'payment_response' => json_encode($result),
                     'status' => 'completed',
                 ]);
             } else {
