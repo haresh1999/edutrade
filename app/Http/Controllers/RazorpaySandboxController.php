@@ -247,18 +247,18 @@ class RazorpaySandboxController extends Controller
             if ($status === 'captured') {
 
                 $order->update([
-                    'payment_response' => json_encode($result),
+                    'request_response' => json_encode($result),
                     'status' => 'completed',
                 ]);
             } else {
                 $order->update([
-                    'payment_response' => json_encode($result),
+                    'request_response' => json_encode($result),
                     'status' => 'failed'
                 ]);
             }
         } else {
             $order->update([
-                'payment_response' => json_encode($result),
+                'request_response' => json_encode($result),
                 'status' => 'failed'
             ]);
         }
