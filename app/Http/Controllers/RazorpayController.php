@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RazorpayCallbackUrl;
 use App\Models\RazorpayOrder;
 use App\Models\RazorpayToken;
 use App\Models\RazorpayUser;
@@ -131,7 +132,10 @@ class RazorpayController extends Controller
             'request_response' => json_encode([]),
         ]);
 
-        RazorpayUser::where('id', $userId)->update([
+        RazorpayCallbackUrl::create([
+            'user_id' => $userId,
+            'order_id' => $tnx->id,
+            'tnx_id' =>  $tnx->tnx_id,
             'callback_url' => $input['callback_url'],
             'redirect_url' => $input['redirect_url']
         ]);
@@ -226,6 +230,12 @@ class RazorpayController extends Controller
 
         $order = RazorpayOrder::findOrFail($request->tnx_id);
 
+        $urls = RazorpayCallbackUrl::where([
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'tnx_id' => $order->tnx_id
+        ])->first();
+
         $ch = curl_init();
 
         curl_setopt_array($ch, [
@@ -274,11 +284,15 @@ class RazorpayController extends Controller
 
         if (! is_null($tnx->user->callback_url)) {
 
-            $this->webhook($tnx->user->callback_url, $sendData);
+            $callback_url = $urls->callback_url;
+
+            $this->webhook($callback_url, $sendData);
         }
 
         $status = $tnx->status;
 
-        return redirect()->to($tnx->user->redirect_url . '?status=' . $status);
+        $redirect_url = $urls->redirect_url;
+
+        return redirect()->to($redirect_url . '?status=' . $status);
     }
 }
