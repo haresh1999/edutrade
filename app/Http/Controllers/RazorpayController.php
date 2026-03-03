@@ -282,17 +282,61 @@ class RazorpayController extends Controller
             'status' => $tnx->status
         ];
 
-        if (! is_null($tnx->user->callback_url)) {
+        $callback_url = $urls->callback_url;
 
-            $callback_url = $urls->callback_url;
-
-            $this->webhook($callback_url, $sendData);
-        }
+        $this->webhook($callback_url, $sendData);
 
         $status = $tnx->status;
 
         $redirect_url = $urls->redirect_url;
 
         return redirect()->to($redirect_url . '?status=' . $status);
+    }
+
+    public function verifyPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => ['required', 'in:a715da0a-db2a-4f15-8df8-56fa7ff5a2f9'],
+        ]);
+
+        if ($validator->fails()) {
+
+            return redirect()->to('https://edutrade.in');
+        }
+
+        return view('razorpay.verify_payment');
+    }
+
+    public function paymentUpdate(Request $request)
+    {
+        $input = $request->validate([
+            'order_id' => ['required', Rule::exists('razorpay_orders', 'order_id')->where('status', 'pending')],
+            'status' => ['required', 'in:completed,failed,refunded,processing,pending'],
+            'password' => ['required', 'in:36351231-e783-4462-ac13-2c1f2d5fca25']
+        ]);
+
+        $order = RazorpayOrder::where('order_id', $input['order_id'])->first();
+
+        $order->update(['status' => $input['status']]);
+
+        $callback = RazorpayCallbackUrl::where('order_id', $order->id)
+            ->where('user_id', $order->user_id)
+            ->where('tnx_id', $order->tnx_id)
+            ->first();
+
+        $callback_url = $callback->callback_url;
+
+        $sendData = [
+            'order_id' => $order->order_id,
+            'tnx_id' => $order->tnx_id,
+            'amount' => $order->amount,
+            'status' => $input['status']
+        ];
+
+        $this->webhook($callback_url, $sendData);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Payment updated successfully');
     }
 }

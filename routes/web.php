@@ -36,6 +36,8 @@ Route::prefix('razorpay')->group(function () {
     Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
     Route::post('callback', [RazorpayController::class, 'callback'])->middleware(['throttle:60,1']);
     Route::post('webhook', [RazorpayController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
+    Route::get('payment/verify', [RazorpayController::class, 'verifyPayment']);
+    Route::post('payment/update', [RazorpayController::class, 'paymentUpdate']);
 });
 
 Route::prefix('razorpay/sandbox')->group(function () {
