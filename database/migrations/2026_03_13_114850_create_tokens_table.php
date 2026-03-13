@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('razorpay_tokens', function (Blueprint $table) {
+        Schema::create('tokens', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('token', 255);
-            $table->foreign('user_id')->references('id')->on('razorpay_users')->onDelete('cascade');
+            $table->uuid('token');
+            $table->enum('env', ['production', 'sandbox']);
+            $table->ipAddress();
+            $table->softDeletes();
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('razorpay_tokens');
+        Schema::dropIfExists('tokens');
     }
 };

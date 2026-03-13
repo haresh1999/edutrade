@@ -11,19 +11,6 @@ use Illuminate\Validation\Rule;
 
 class PhonepeController extends Controller
 {
-    public function token()
-    {
-        $userId = config('services.phonepe.user.id');
-
-        $token = str()->random(100);
-
-        PhonepeUser::where('id', $userId)->update(['refresh_token' => $token]);
-
-        return response()->json([
-            'refresh_token' => $token
-        ]);
-    }
-
     public function create(Request $request)
     {
         $userId = config('services.phonepe.user.id');

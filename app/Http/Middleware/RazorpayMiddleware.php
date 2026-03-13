@@ -2,9 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\RazorpaySandboxToken;
-use App\Models\RazorpayToken;
-use App\Models\RazorpayUser;
+use App\Models\Token;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -21,37 +20,33 @@ class RazorpayMiddleware
     {
         $currentUrl = url()->current();
         $is_sandbox = str_contains($currentUrl, 'sandbox');
+        $env = $is_sandbox ? 'sandbox' : 'production';
 
         if (str_contains($currentUrl, 'token')) {
             $clientId = $request->header('client-id');
             $clientSecret = $request->header('client-secret');
-            $user = RazorpayUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret) {
-                $query->where('sandbox_client_id', $clientId)->where('sandbox_client_secret', $clientSecret);
+            $user = User::when($is_sandbox, function ($query) use ($clientId, $clientSecret) {
+                $query->where('sbx_client_id', $clientId)->where('sbx_client_secret', $clientSecret);
             }, function ($query) use ($clientId, $clientSecret) {
                 $query->where('client_id', $clientId)->where('client_secret', $clientSecret);
             })->first();
         } else {
             $refreshToken = $request->get('refresh_token');
+
             if (str_contains($refreshToken, '-')) {
+
                 $seperation = explode('-', $refreshToken);
                 $user_id = end($seperation);
-                if ($is_sandbox) {
 
-                    RazorpaySandboxToken::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
+                Token::where('created_at', '<=', Carbon::now()->subMinutes(5))
+                    ->where('env', $env)
+                    ->delete();
 
-                    $token = RazorpaySandboxToken::where('user_id', $user_id)
-                        ->where('token', $refreshToken)
-                        ->where('created_at', '>=', Carbon::now()->subMinutes(5))
-                        ->first();
-                } else {
-
-                    RazorpayToken::where('created_at', '<=', Carbon::now()->subMinutes(5))->delete();
-
-                    $token = RazorpayToken::where('user_id', $user_id)
-                        ->where('token', $refreshToken)
-                        ->where('created_at', '>=', Carbon::now()->subMinutes(5))
-                        ->first();
-                }
+                $token = Token::where('user_id', $user_id)
+                    ->where('token', $refreshToken)
+                    ->where('env', $env)
+                    ->where('created_at', '>=', Carbon::now()->subMinutes(5))
+                    ->first();
 
                 if (is_null($token) || ! isset($token->user_id)) {
 
@@ -61,7 +56,7 @@ class RazorpayMiddleware
                     ], 401);
                 }
 
-                $user = RazorpayUser::find($token->user_id);
+                $user = User::find($token->user_id);
 
                 $token->delete();
             } else {
@@ -80,7 +75,8 @@ class RazorpayMiddleware
             ], 401);
         }
 
-        config(['services.razorpay.user' => $user->toArray()]);
+        config(['services.user' => $user->toArray()]);
+        config('services.env', $user->env);
 
         return $next($request);
     }

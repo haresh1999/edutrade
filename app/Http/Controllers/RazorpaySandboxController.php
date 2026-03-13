@@ -12,22 +12,6 @@ use Illuminate\Validation\Rule;
 
 class RazorpaySandboxController extends Controller
 {
-    public function token()
-    {
-        $userId = config('services.razorpay.user.id');
-
-        $token = str()->uuid() . '-' . $userId;
-
-        RazorpaySandboxToken::create([
-            'user_id' => $userId,
-            'token' => $token
-        ]);
-
-        return response()->json([
-            'refresh_token' => $token
-        ]);
-    }
-
     public function getOrderId(Request $request)
     {
         $request->validate([

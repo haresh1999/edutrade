@@ -35,8 +35,10 @@ return [
         ],
     ],
 
+    'env' => env('APP_MODE', 'production'),
+    'user' => [],
+
     'sabpaisa' => [
-        'user' => [],
         'sandbox' => [
             'client_code' => 'DCRBP',
             'username' => 'userph.jha_3036',
@@ -54,21 +56,17 @@ return [
     ],
 
     'razorpay' => [
-        'user' => [],
         'sandbox' => [
             'key_id' => 'rzp_test_RXE0uWen59xOZ0',
             'key_secret' => 'PRq5jSWVM7VvKc5fqEdaqhWn',
-            'key_sign' => '9bed0414-feb0-48dc-841c-9dc4c823c987'
         ],
         'production' => [
             'key_id' => 'rzp_live_RTIzeZS7Q22shx',
             'key_secret' => 'nca3Agw8XlpW95Hfmp4et4al',
-            'key_sign' => 'eb37da3f-d104-4579-9e71-da68ea28f98f'
         ],
     ],
 
     'phonepe' => [
-        'user' => [],
         'sandbox' => [
             'merchant' => 'EDU TRADE',
             'merchant_id' => 'M23PMXE558QOM',
@@ -88,7 +86,6 @@ return [
     ],
 
     'paytm' => [
-        'user' => [],
         'sandbox' => [
             'mid' => 'Resell00448805757124',
             'mkey' => 'KXHUJH&Ywq9pUkkr',

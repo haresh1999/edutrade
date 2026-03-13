@@ -13,22 +13,6 @@ use Illuminate\Validation\Rule;
 
 class RazorpayController extends Controller
 {
-    public function token()
-    {
-        $userId = config('services.razorpay.user.id');
-
-        $token = str()->uuid() . '-' . $userId;
-
-        RazorpayToken::create([
-            'user_id' => $userId,
-            'token' => $token
-        ]);
-
-        return response()->json([
-            'refresh_token' => $token
-        ]);
-    }
-
     public function getOrderId(Request $request)
     {
         $request->validate([
@@ -92,59 +76,6 @@ class RazorpayController extends Controller
                 'razorpay_response' => $result
             ], 400);
         }
-    }
-
-    public function request(Request $request)
-    {
-        $userId = config('services.razorpay.user.id');
-
-        $validator = Validator::make($request->all(), [
-            'order_id' => [
-                'required',
-                'string',
-                Rule::unique('razorpay_orders', 'order_id')->where('user_id', $userId)
-            ],
-            'amount' => ['required', 'numeric', 'min:1'],
-            'payer_name' => ['required', 'string', 'max:255'],
-            'payer_email' => ['required', 'email', 'max:255'],
-            'payer_mobile' => ['required', 'digits:10'],
-            'callback_url' => ['required', 'url'],
-            'redirect_url' => ['required', 'url'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $input = $validator->validated();
-
-        $tnx = RazorpayOrder::create([
-            'user_id' => $userId,
-            'order_id' => $input['order_id'],
-            'amount' => $input['amount'],
-            'payer_name' => $input['payer_name'],
-            'payer_email' => $input['payer_email'],
-            'payer_mobile' => $input['payer_mobile'],
-            'request_response' => json_encode([]),
-        ]);
-
-        RazorpayCallbackUrl::create([
-            'user_id' => $userId,
-            'order_id' => $tnx->id,
-            'tnx_id' =>  $tnx->tnx_id,
-            'callback_url' => $input['callback_url'],
-            'redirect_url' => $input['redirect_url']
-        ]);
-
-        $string = str()->random(13);
-
-        $url = url('razorpay/checkout/order-pay/' . $tnx->id . '?key=wc_order_' . $string);
-
-        return redirect()->to($url);
     }
 
     public function orderPay($tid)

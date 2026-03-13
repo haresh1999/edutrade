@@ -11,23 +11,26 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sabpaisa_orders', function (Blueprint $table) {
+        Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('order_id');
-            $table->uuid('tnx_id')->unique();
-            $table->decimal('amount', 10, 2);
-            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'refunded'])->default('pending');
             $table->string('payer_name');
             $table->string('payer_email');
             $table->string('payer_mobile');
-            $table->json('request_response')->nullable();
+            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'refunded'])->default('pending');
+            $table->enum('gateway', ['phonepe', 'razorpay', 'cashfree', 'payu', 'easebuzz', 'paytm', 'zaaakapay']);
+            $table->enum('env', ['production', 'sandbox']);
+            $table->decimal('amount', 10, 2);
+            $table->json('payment_response')->nullable();
             $table->decimal('refund_amount', 10, 2)->nullable();
             $table->json('refund_response')->nullable();
+            $table->string('redirect_url');
+            $table->string('callback_url');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unique(['user_id', 'order_id']);
             $table->softDeletes();
             $table->timestamps();
-            $table->unique(['user_id', 'order_id']);
-            $table->foreign('user_id')->references('id')->on('sabpaisa_users')->onDelete('cascade');
         });
     }
 
@@ -36,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sabpaisa_orders');
+        Schema::dropIfExists('transactions');
     }
 };

@@ -16,15 +16,19 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('mobile')->unique();
             $table->string('password');
+            $table->string('client_id', 100)->unique();
+            $table->string('client_secret')->unique();
+            $table->string('sbx_client_id', 100)->unique();
+            $table->string('sbx_client_secret')->unique();
+            $table->string('callback_secret');
+            $table->json('whitelist_ip')->nullable();
+            $table->string('default_gateway')->nullable();
+            $table->enum('env', ['production', 'sandbox']);
             $table->rememberToken();
+            $table->softDeletes();
             $table->timestamps();
-        });
-
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
