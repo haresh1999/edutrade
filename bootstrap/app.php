@@ -1,16 +1,12 @@
 <?php
 
 use App\Http\Middleware\{
-    PayoutMiddleware,
-    PaytmMiddleware,
-    PhonepeMiddleware,
-    RazorpayMiddleware,
-    RazorpaySignatureMiddleware,
-    SabpaisaMiddleware,
+    AuthMiddleware,
+    SignatureMiddleware,
+    TokenMiddleware,
 };
 
 use Illuminate\Foundation\Application;
-
 use Illuminate\Foundation\Configuration\{
     Exceptions,
     Middleware
@@ -25,18 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'sabpaisa' => SabpaisaMiddleware::class,
-            'razorpay' => RazorpayMiddleware::class,
-            'razorpay.sign' => RazorpaySignatureMiddleware::class,
-            'phonepe' => PhonepeMiddleware::class,
-            'paytm' => PaytmMiddleware::class,
-            'payout' => PayoutMiddleware::class,
-        ])->validateCsrfTokens(except: [
-            'sabpaisa/*',
-            'razorpay/*',
-            'phonepe/*',
-            'paytm/*',
-        ]);;
+            'auth' => AuthMiddleware::class,
+            'signature' => SignatureMiddleware::class,
+            'token' => TokenMiddleware::class,
+        ])->validateCsrfTokens(except: []);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

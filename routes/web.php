@@ -9,9 +9,17 @@ use App\Http\Controllers\{
     SabpaisaSandboxController,
     PaytmController,
     PaytmSandboxController,
+    TransactionController,
 };
 
 use Illuminate\Support\Facades\Route;
+
+
+Route::prefix('sandbox')->group(function () {
+    Route::get('token', [TransactionController::class, 'getToken'])->middleware('token');
+    Route::post('request', [TransactionController::class, 'request'])->middleware(['throttle:600,10', 'auth', 'signature']);
+});
+
 
 Route::prefix('sabpaisa')->group(function () {
     Route::post('request', [SabpaisaController::class, 'request'])->middleware('sabpaisa');

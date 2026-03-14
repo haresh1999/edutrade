@@ -2,12 +2,12 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\SabpaisaUser;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class SabpaisaMiddleware
+class TokenMiddleware
 {
     /**
      * Handle an incoming request.
@@ -16,12 +16,15 @@ class SabpaisaMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $clientId = request('client_id', '');
-        $clientSecret = request('client_secret', '');
-        $is_sandbox = str_contains(url()->current(), 'sandbox');
+        $currentUrl = url()->current();
+        $env = str_contains($currentUrl, 'sandbox') ? 'sandbox' : 'production';
 
-        $user = SabpaisaUser::when($is_sandbox, function ($query) use ($clientId, $clientSecret) {
-            $query->where('sandbox_client_id', $clientId)->where('sandbox_client_secret', $clientSecret);
+        $clientId = $request->header('client-id');
+
+        $clientSecret = $request->header('client-secret');
+
+        $user = User::when($env == 'sandbox', function ($query) use ($clientId, $clientSecret) {
+            $query->where('sbx_client_id', $clientId)->where('sbx_client_secret', $clientSecret);
         }, function ($query) use ($clientId, $clientSecret) {
             $query->where('client_id', $clientId)->where('client_secret', $clientSecret);
         })->first();
@@ -34,12 +37,8 @@ class SabpaisaMiddleware
             ], 401);
         }
 
-        if (!is_null($user->whitelist_ip) && !in_array($request->ip(), json_decode($user->whitelist_ip))) {
-
-            return response()->json(['error' => 'Unauthorized request'], 403);
-        }
-
-        config(['services.sabpaisa.user' => $user->toArray()]);
+        config(['services.user' => $user->toArray()]);
+        config('services.env', $env);
 
         return $next($request);
     }

@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class RazorpaySignatureMiddleware
+class SignatureMiddleware
 {
     /**
      * Handle an incoming request.
@@ -15,11 +15,7 @@ class RazorpaySignatureMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $currentUrl = url()->current();
-
-        $env = str_contains($currentUrl, 'sandbox') ? 'sandbox' : 'production';
-
-        $secret = config("services.razorpay.{$env}.key_sign");
+        $secret = config('services.user.callback_secret');
 
         $payload = $request->except(['signature', 'callback_url', 'redirect_url']);
 
@@ -30,6 +26,7 @@ class RazorpaySignatureMiddleware
         $receivedSignature = $request->signature ?? '';
 
         if (!$receivedSignature) {
+
             return response()->json([
                 'status' => false,
                 'error' => 'Signature missing or invalid signature provided'
