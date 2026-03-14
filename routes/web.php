@@ -14,7 +14,6 @@ use App\Http\Controllers\{
 
 use Illuminate\Support\Facades\Route;
 
-
 Route::prefix('{env?}')->group(function () {
     Route::get('token', [TransactionController::class, 'getToken'])->middleware('token');
     Route::post('request', [TransactionController::class, 'request'])->middleware(['throttle:600,10', 'auth', 'signature']);
@@ -50,13 +49,11 @@ Route::prefix('sabpaisa')->group(function () {
 Route::prefix('phonepe')->group(function () {
     Route::post('create', [PhonepeController::class, 'create'])->middleware('phonepe');
     Route::post('request', [PhonepeController::class, 'request']);
-    Route::post('status', [PhonepeController::class, 'status'])->middleware('phonepe');
     Route::any('callback', [PhonepeController::class, 'callback']);
 
     Route::prefix('sandbox')->group(function () {
         Route::post('create', [PhonepeSandboxController::class, 'create'])->middleware('phonepe');
         Route::post('request', [PhonepeSandboxController::class, 'request']);
-        Route::post('status', [PhonepeSandboxController::class, 'status'])->middleware('phonepe');
         Route::any('callback', [PhonepeSandboxController::class, 'callback']);
     });
 });
@@ -64,13 +61,11 @@ Route::prefix('phonepe')->group(function () {
 Route::prefix('paytm')->group(function () {
     Route::post('create', [PaytmController::class, 'create'])->middleware('paytm');
     Route::post('request', [PaytmController::class, 'request'])->middleware('paytm');
-    Route::post('status', [PaytmController::class, 'status'])->middleware('paytm');
     Route::any('callback', [PaytmController::class, 'callback']);
 
     Route::prefix('sandbox')->group(function () {
         Route::post('create', [PaytmSandboxController::class, 'create'])->middleware('paytm');
         Route::post('request', [PaytmSandboxController::class, 'request'])->middleware('paytm');
-        Route::post('status', [PaytmSandboxController::class, 'status'])->middleware('paytm');
         Route::any('callback', [PaytmSandboxController::class, 'callback']);
     });
 });
