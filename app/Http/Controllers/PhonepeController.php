@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PhonepeOrder;
-use App\Models\PhonepeUser;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class PhonepeController extends Controller
@@ -139,54 +136,6 @@ class PhonepeController extends Controller
         ], 401);
     }
 
-    public function status(Request $request)
-    {
-        $userId = config('services.phonepe.user.id');
-
-        $validator = Validator::make($request->all(), [
-            'tnx_id' => ['required', 'string', Rule::exists('phonepe_orders', 'tnx_id')->where('user_id', $userId)],
-        ]);
-
-        if ($validator->fails()) {
-
-            return response()->json([
-                'status' => 'error',
-                'message' => $validator->errors()->first()
-            ], 422);
-        }
-
-        $input = $validator->validated();
-
-        $order = PhonepeOrder::where('user_id', $userId)
-            ->where('tnx_id', $input['tnx_id'])
-            ->first();
-
-        return response()->json([
-            'order_id' => $order->order_id,
-            'tnx_id' => $order->tnx_id,
-            'amount' => $order->amount,
-            'status' => $order->status,
-            'payer_name' => $order->payer_name,
-            'payer_email' => $order->payer_email,
-            'payer_mobile' => $order->payer_mobile,
-        ]);
-    }
-
-    private function clientCallback($url, $order)
-    {
-        $data = [
-            'order_id' => $order->order_id,
-            'tnx_id' => $order->tnx_id,
-            'amount' => $order->amount,
-            'status' => $order->status,
-            'payer_name' => $order->payer_name,
-            'payer_email' => $order->payer_email,
-            'payer_mobile' => $order->payer_mobile,
-        ];
-
-        return Http::post($url, $data);
-    }
-
     public function callback(Request $request)
     {
         $order = PhonepeOrder::with('user')
@@ -287,10 +236,5 @@ class PhonepeController extends Controller
                 return redirect()->to($redirectUrl);
             }
         }
-    }
-
-    public function webhook()
-    {
-        //
     }
 }
