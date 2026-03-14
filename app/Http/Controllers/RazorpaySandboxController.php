@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RazorpaySandboxOrder;
-use App\Models\RazorpaySandboxToken;
-use App\Models\RazorpayUser;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -14,16 +11,23 @@ class RazorpaySandboxController extends Controller
 {
     public function getOrderId(Request $request)
     {
-        $request->validate([
-            'id' => ['required', 'integer', 'exists:razorpay_sandbox_orders,id']
+        $validator = Validator::make($request->all(), [
+            'reference_id' => ['required', Rule::exists('transactions')->where('status', 'pending')->where('env', 'sandbox')]
         ]);
 
-        $tnx = RazorpaySandboxOrder::findOrFail($request->id);
+        if ($validator->fails()) {
 
-        $keyId = setting('key_id');
-        $keySecret = setting('key_secret');
+            return response()->json('error', $validator->errors()->first());
+        }
 
-        $amount   = (int) ($tnx->amount * 100);
+        $input = $validator->validated();
+
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
+
+        $keyId = setting('razorpay', 'key_id');
+        $keySecret = setting('razorpay', 'key_secret');
+
+        $amount   = (int) ($transaction->amount * 100);
         $currency = "INR";
 
         $data = [
@@ -31,8 +35,8 @@ class RazorpaySandboxController extends Controller
             "currency" => $currency,
             "payment_capture" => 1,
             "notes" => [
-                "woocommerce_order_id" => $tnx->id,
-                "woocommerce_order_number" => $tnx->id
+                "woocommerce_order_id" => $transaction->id,
+                "woocommerce_order_number" => $transaction->id
             ],
         ];
 
@@ -64,7 +68,7 @@ class RazorpaySandboxController extends Controller
 
         $result = json_decode($response, true);
 
-        $tnx->update(['request_response' => json_encode($result)]);
+        $transaction->update(['request_response' => json_encode($result)]);
 
         if ($httpCode === 200 && isset($result['id'])) {
             return  response()->json($result['id']);
@@ -77,61 +81,22 @@ class RazorpaySandboxController extends Controller
         }
     }
 
-    public function request(Request $request)
+    public function orderPay(Request $request)
     {
-        $userId = config('services.razorpay.user.id');
-
         $validator = Validator::make($request->all(), [
-            'order_id' => [
-                'required',
-                'string',
-                Rule::unique('razorpay_sandbox_orders', 'order_id')->where('user_id', $userId)
-            ],
-            'amount' => ['required', 'numeric', 'min:1'],
-            'payer_name' => ['required', 'string', 'max:255'],
-            'payer_email' => ['required', 'email', 'max:255'],
-            'payer_mobile' => ['required', 'digits:10'],
-            'callback_url' => ['required', 'url'],
-            'redirect_url' => ['required', 'url'],
+            'reference_id' => ['required', Rule::exists('transactions')->where('status', 'pending')->where('env', 'sandbox')]
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+
+            return redirect()->to(env('APP_URL'));
         }
 
         $input = $validator->validated();
 
-        $tnx = RazorpaySandboxOrder::create([
-            'user_id' => $userId,
-            'order_id' => $input['order_id'],
-            'amount' => $input['amount'],
-            'payer_name' => $input['payer_name'],
-            'payer_email' => $input['payer_email'],
-            'payer_mobile' => $input['payer_mobile'],
-            'request_response' => json_encode([]),
-        ]);
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
 
-        RazorpayUser::where('id', $userId)->update([
-            'callback_url' => $input['callback_url'],
-            'redirect_url' => $input['redirect_url']
-        ]);
-
-        $string = str()->random(13);
-
-        $url = url('razorpay/sandbox/checkout/order-pay/' . $tnx->id . '?key=wc_order_' . $string);
-
-        return redirect()->to($url);
-    }
-
-    public function orderPay($tid)
-    {
-        $transaction = RazorpaySandboxOrder::findOrFail($tid);
-
-        $input['callback_url'] = env('RAZORPAY_SANDBOX_REDIRECT_URL') . "?tnx_id={$transaction->id}";
+        $input['callback_url'] = env('RAZORPAY_SANDBOX_REDIRECT_URL') . "?reference_id={$transaction->reference_id}";
 
         $input['order_id_url'] = url('razorpay/sandbox/get/order-id');
 
@@ -140,75 +105,33 @@ class RazorpaySandboxController extends Controller
         $input['payer_name'] = $transaction->payer_name;
         $input['payer_email'] = $transaction->payer_email;
         $input['payer_mobile'] = $transaction->payer_mobile;
-        $input['tnx_id'] = $transaction->id;
+        $input['reference_id'] = $transaction->reference_id;
+        $input['id'] = $transaction->id;
 
         return view('razorpay.request', compact('input'));
     }
 
-    public function status(Request $request)
+    public function callback(Request $request)
     {
-        $userId = config('services.razorpay.user.id');
-
         $validator = Validator::make($request->all(), [
-            'tnx_id' => ['required', 'string', Rule::exists('razorpay_sandbox_orders', 'tnx_id')->where('user_id', $userId)],
+            'razorpay_payment_id' => ['required'],
+            'razorpay_signature' => ['required'],
+            'razorpay_order_id' => ['required'],
+            'reference_id' => ['required', Rule::exists('transactions')->where('status', 'pending')->where('env', 'sandbox')]
         ]);
 
         if ($validator->fails()) {
-
-            return response()->json([
-                'status' => 'error',
-                'message' => $validator->errors()->first()
-            ], 422);
+            return redirect()->to(env('APP_URL'));
         }
 
         $input = $validator->validated();
 
-        $order = RazorpaySandboxOrder::where('user_id', $userId)
-            ->where('tnx_id', $input['tnx_id'])
-            ->first();
-
-        return response()->json([
-            'order_id' => $order->order_id,
-            'tnx_id' => $order->tnx_id,
-            'amount' => $order->amount,
-            'status' => $order->status,
-            'payer_name' => $order->payer_name,
-            'payer_email' => $order->payer_email,
-            'payer_mobile' => $order->payer_mobile,
-        ]);
-    }
-
-    public function webhook($url, $data)
-    {
-        ksort($data);
-
-        $payloadQueryString = http_build_query($data);
-
-        $secret = config('services.razorpay.sandbox.key_sign');
-
-        $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
-
-        return Http::withHeaders([
-            'X-Provider-Signature' => $calculatedSignature,
-            'Content-Type' => 'application/x-www-form-urlencoded'
-        ])->post($url, $data);
-    }
-
-    public function callback(Request $request)
-    {
-        $request->validate([
-            'razorpay_payment_id' => ['required'],
-            'razorpay_signature' => ['required'],
-            'razorpay_order_id' => ['required'],
-            'tnx_id' => ['required', 'integer', 'exists:razorpay_sandbox_orders,id']
-        ]);
-
-        $keyId = setting('key_id');
-        $keySecret = setting('key_secret');
+        $keyId = setting('razorpay', 'key_id');
+        $keySecret = setting('razorpay', 'key_secret');
 
         $paymentId = $request->razorpay_payment_id;
 
-        $order = RazorpaySandboxOrder::findOrFail($request->tnx_id);
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
 
         $ch = curl_init();
 
@@ -230,39 +153,23 @@ class RazorpaySandboxController extends Controller
 
             if ($status === 'captured') {
 
-                $order->update([
+                $transaction->update([
                     'request_response' => json_encode($result),
                     'status' => 'completed',
                 ]);
             } else {
-                $order->update([
+                $transaction->update([
                     'request_response' => json_encode($result),
                     'status' => 'failed'
                 ]);
             }
         } else {
-            $order->update([
+            $transaction->update([
                 'request_response' => json_encode($result),
                 'status' => 'failed'
             ]);
         }
 
-        $tnx = RazorpaySandboxOrder::findOrFail($request->tnx_id);
-
-        $sendData = [
-            'order_id' => $tnx->order_id,
-            'tnx_id' => $tnx->tnx_id,
-            'amount' => $tnx->amount,
-            'status' => $tnx->status
-        ];
-
-        if (! is_null($tnx->user->callback_url)) {
-
-            $this->webhook($tnx->user->callback_url, $sendData);
-        }
-
-        $status = $tnx->status;
-
-        return redirect()->to($tnx->user->redirect_url . '?status=' . $status);
+        return redirect()->route('sandbox/redirect');
     }
 }

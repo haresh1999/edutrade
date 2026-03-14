@@ -24,6 +24,7 @@ class Transaction extends Model
         'refund_response',
         'redirect_url',
         'callback_url',
+        'reference_id'
     ];
 
     protected static function boot()
@@ -32,6 +33,7 @@ class Transaction extends Model
 
         static::creating(function ($model) {
             $model->env = config('services.env');
+            $model->reference_id = str()->uuid()->toString();
         });
     }
 

@@ -18,18 +18,17 @@
             type: "POST",
             url: "{{ $input['order_id_url'] }}",
             data: { 
-                id: "{{ $input['tnx_id'] }}",
+                reference_id: "{{ $input['reference_id'] }}",
                 _token: "{{ csrf_token() }}" 
             },
             success: function(result) {
                 var options = {
-                        "key": "{{setting('key_id')}}",
+                        "key": "{{setting('razorpay','key_id')}}",
                         "amount": "{{$input['amount']}}",
                         "currency": "INR",
                         "name": "Edutrade",
-                        "description": "Order {{ $input['tnx_id'] }}",
-                    
-                        "image": "https://edutrade.in/wp-content/uploads/2025/09/cropped-cropped-Screenshot-2025-09-03-111318.png",
+                        "description": "Order {{ $input['id'] }}",
+                        "image": "https://apexonline.in/wp-content/uploads/2025/09/cropped-cropped-Screenshot-2025-09-03-111318.png",
                         "order_id": result,
                         "callback_url": "{{ $input['callback_url'] }}",
                         "prefill": {

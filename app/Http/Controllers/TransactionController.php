@@ -75,20 +75,18 @@ class TransactionController extends Controller
             'redirect_url' => $input['redirect_url']
         ]);
 
-        $string = str()->random(13);
-
         if ($env == 'sandbox') {
 
-            $url = "{$gateway}/{$env}/order-pay/{$tnx->id}?key=wc_order_{$string}";
+            $url = "{$gateway}/{$env}/order-pay?reference_id={$tnx->uuid}&key=wc_order_{$tnx->id}";
         } else {
 
-            $url = "{$gateway}/order-pay/{$tnx->id}?key=wc_order_{$string}";
+            $url = "{$gateway}/order-pay?reference_id={$tnx->uuid}&key=wc_order_{$tnx->id}";
         }
 
         return redirect()->to($url);
     }
 
-    public function webhook($url, $secret, $data)
+    protected function webhook($url, $secret, $data)
     {
         ksort($data);
 
@@ -100,6 +98,48 @@ class TransactionController extends Controller
             'X-Provider-Signature' => $calculatedSignature,
             'Content-Type' => 'application/x-www-form-urlencoded'
         ])->post($url, $data);
+    }
+
+    public function status(Request $request)
+    {
+        $userId = config('services.phonepe.user.id');
+
+        $env = config('services.env');
+
+        $validator = Validator::make($request->all(), [
+            'order_id' => ['required', 'string',   Rule::unique('transactions', 'order_id')->where(function ($query) use ($userId, $env) {
+                return $query->where('user_id', $userId)->where('env', $env);
+            }),],
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $input = $validator->validated();
+
+        $transaction = Transaction::where('user_id', $userId)
+            ->where('order_id', $input['order_id'])
+            ->where('env', $env)
+            ->first();
+
+        return response()->json([
+            'transaction_id' => $transaction->id,
+            'order_id' => $transaction->order_id,
+            'reference_id' => $transaction->reference_id,
+            'amount' => $transaction->amount,
+            'refund_amount' => $transaction->refund_amount,
+            'status' => $transaction->status,
+            'payer_name' => $transaction->payer_name,
+            'payer_email' => $transaction->payer_email,
+            'payer_mobile' => $transaction->payer_mobile,
+            'redirect_url' => $transaction->redirect_url,
+            'callback_url' => $transaction->callback_url,
+        ]);
     }
 
     public function verifyPayment(Request $request)
@@ -162,5 +202,43 @@ class TransactionController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Payment updated successfully');
+    }
+
+    public function redirect(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'reference_id' => ['required', Rule::exists('transactions', 'reference_id')]
+        ]);
+
+        if ($validator->fails()) {
+
+            return redirect()->to(env('APP_URL'));
+        }
+
+        $input = $validator->validated();
+
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
+
+        $callback_secret = User::where('id', $transaction->user_id)->value();
+
+        $sendData = [
+            'transaction_id' => $transaction->id,
+            'order_id' => $transaction->order_id,
+            'reference_id' => $transaction->reference_id,
+            'amount' => $transaction->amount,
+            'refund_amount' => $transaction->refund_amount,
+            'status' => $transaction->status,
+            'payer_name' => $transaction->payer_name,
+            'payer_email' => $transaction->payer_email,
+            'payer_mobile' => $transaction->payer_mobile,
+            'redirect_url' => $transaction->redirect_url,
+            'callback_url' => $transaction->callback_url,
+        ];
+
+        $callback_url = $transaction->callback_url;
+
+        $this->webhook($callback_url, $callback_secret, $sendData);
+
+        return redirect()->to($transaction->redirect_url . '?status=' . $transaction->status);
     }
 }

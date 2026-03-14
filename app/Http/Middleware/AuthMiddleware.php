@@ -60,7 +60,7 @@ class AuthMiddleware
             }
 
             config(['services.user' => $user->toArray()]);
-            config('services.env', $user->env);
+            config('services.env', $env);
 
             return $next($request);
         }

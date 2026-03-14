@@ -2,12 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RazorpayCallbackUrl;
-use App\Models\RazorpayOrder;
-use App\Models\RazorpayToken;
-use App\Models\RazorpayUser;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -15,16 +11,23 @@ class RazorpayController extends Controller
 {
     public function getOrderId(Request $request)
     {
-        $request->validate([
-            'id' => ['required', 'integer', 'exists:razorpay_orders,id']
+        $validator = Validator::make($request->all(), [
+            'reference_id' => ['required', Rule::exists('transactions')->where('status', 'pending')->where('env', 'production')]
         ]);
 
-        $tnx = RazorpayOrder::findOrFail($request->id);
+        if ($validator->fails()) {
 
-        $keyId = setting('key_id');
-        $keySecret = setting('key_secret');
+            return response()->json('error', $validator->errors()->first());
+        }
 
-        $amount   = (int) ($tnx->amount * 100);
+        $input = $validator->validated();
+
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
+
+        $keyId = setting('razorpay', 'key_id');
+        $keySecret = setting('razorpay', 'key_secret');
+
+        $amount   = (int) ($transaction->amount * 100);
         $currency = "INR";
 
         $data = [
@@ -32,8 +35,8 @@ class RazorpayController extends Controller
             "currency" => $currency,
             "payment_capture" => 1,
             "notes" => [
-                "woocommerce_order_id" => $tnx->id,
-                "woocommerce_order_number" => $tnx->id
+                "woocommerce_order_id" => $transaction->id,
+                "woocommerce_order_number" => $transaction->id
             ],
         ];
 
@@ -65,7 +68,7 @@ class RazorpayController extends Controller
 
         $result = json_decode($response, true);
 
-        $tnx->update(['request_response' => json_encode($result)]);
+        $transaction->update(['request_response' => json_encode($result)]);
 
         if ($httpCode === 200 && isset($result['id'])) {
             return  response()->json($result['id']);
@@ -78,11 +81,22 @@ class RazorpayController extends Controller
         }
     }
 
-    public function orderPay($tid)
+    public function orderPay(Request $request)
     {
-        $transaction = RazorpayOrder::findOrFail($tid);
+        $validator = Validator::make($request->all(), [
+            'reference_id' => ['required', Rule::exists('transactions')->where('status', 'pending')->where('env', 'production')]
+        ]);
 
-        $input['callback_url'] = env('RAZORPAY_REDIRECT_URL') . "?tnx_id={$transaction->id}";
+        if ($validator->fails()) {
+
+            return redirect()->to(env('APP_URL'));
+        }
+
+        $input = $validator->validated();
+
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
+
+        $input['callback_url'] = env('RAZORPAY_REDIRECT_URL') . "?reference_id={$transaction->reference_id}";
 
         $input['order_id_url'] = url('razorpay/get/order-id');
 
@@ -91,81 +105,33 @@ class RazorpayController extends Controller
         $input['payer_name'] = $transaction->payer_name;
         $input['payer_email'] = $transaction->payer_email;
         $input['payer_mobile'] = $transaction->payer_mobile;
-        $input['tnx_id'] = $transaction->id;
+        $input['reference_id'] = $transaction->reference_id;
+        $input['id'] = $transaction->id;
 
         return view('razorpay.request', compact('input'));
     }
 
-    public function status(Request $request)
+    public function callback(Request $request)
     {
-        $userId = config('services.razorpay.user.id');
-
         $validator = Validator::make($request->all(), [
-            'tnx_id' => ['required', 'string', Rule::exists('razorpay_orders', 'tnx_id')->where('user_id', $userId)],
+            'razorpay_payment_id' => ['required'],
+            'razorpay_signature' => ['required'],
+            'razorpay_order_id' => ['required'],
+            'reference_id' => ['required', Rule::exists('transactions')->where('status', 'pending')->where('env', 'production')]
         ]);
 
         if ($validator->fails()) {
-
-            return response()->json([
-                'status' => 'error',
-                'message' => $validator->errors()->first()
-            ], 422);
+            return redirect()->to(env('APP_URL'));
         }
 
         $input = $validator->validated();
 
-        $order = RazorpayOrder::where('user_id', $userId)
-            ->where('tnx_id', $input['tnx_id'])
-            ->first();
-
-        return response()->json([
-            'order_id' => $order->order_id,
-            'tnx_id' => $order->tnx_id,
-            'amount' => $order->amount,
-            'status' => $order->status,
-            'payer_name' => $order->payer_name,
-            'payer_email' => $order->payer_email,
-            'payer_mobile' => $order->payer_mobile,
-        ]);
-    }
-
-    public function webhook($url, $data)
-    {
-        ksort($data);
-
-        $payloadQueryString = http_build_query($data);
-
-        $secret = config('services.razorpay.production.key_sign');
-
-        $calculatedSignature = hash_hmac('sha256', $payloadQueryString, $secret);
-
-        return Http::withHeaders([
-            'X-Provider-Signature' => $calculatedSignature,
-            'Content-Type' => 'application/x-www-form-urlencoded'
-        ])->post($url, $data);
-    }
-
-    public function callback(Request $request)
-    {
-        $request->validate([
-            'razorpay_payment_id' => ['required'],
-            'razorpay_signature' => ['required'],
-            'razorpay_order_id' => ['required'],
-            'tnx_id' => ['required', 'integer', 'exists:razorpay_orders,id']
-        ]);
-
-        $keyId = setting('key_id');
-        $keySecret = setting('key_secret');
+        $keyId = setting('razorpay', 'key_id');
+        $keySecret = setting('razorpay', 'key_secret');
 
         $paymentId = $request->razorpay_payment_id;
 
-        $order = RazorpayOrder::findOrFail($request->tnx_id);
-
-        $urls = RazorpayCallbackUrl::where([
-            'order_id' => $order->id,
-            'user_id' => $order->user_id,
-            'tnx_id' => $order->tnx_id
-        ])->first();
+        $transaction = Transaction::where('reference_id', $input['reference_id'])->first();
 
         $ch = curl_init();
 
@@ -187,87 +153,23 @@ class RazorpayController extends Controller
 
             if ($status === 'captured') {
 
-                $order->update([
+                $transaction->update([
                     'request_response' => json_encode($result),
                     'status' => 'completed',
                 ]);
             } else {
-                $order->update([
+                $transaction->update([
                     'request_response' => json_encode($result),
                     'status' => 'failed'
                 ]);
             }
         } else {
-            $order->update([
+            $transaction->update([
                 'request_response' => json_encode($result),
                 'status' => 'failed'
             ]);
         }
 
-        $tnx = RazorpayOrder::findOrFail($request->tnx_id);
-
-        $sendData = [
-            'order_id' => $tnx->order_id,
-            'tnx_id' => $tnx->tnx_id,
-            'amount' => $tnx->amount,
-            'status' => $tnx->status
-        ];
-
-        $callback_url = $urls->callback_url;
-
-        $this->webhook($callback_url, $sendData);
-
-        $status = $tnx->status;
-
-        $redirect_url = $urls->redirect_url;
-
-        return redirect()->to($redirect_url . '?status=' . $status);
-    }
-
-    public function verifyPayment(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'token' => ['required', 'in:a715da0a-db2a-4f15-8df8-56fa7ff5a2f9'],
-        ]);
-
-        if ($validator->fails()) {
-
-            return redirect()->to('https://edutrade.in');
-        }
-
-        return view('razorpay.verify_payment');
-    }
-
-    public function paymentUpdate(Request $request)
-    {
-        $input = $request->validate([
-            'order_id' => ['required', Rule::exists('razorpay_orders', 'order_id')->where('status', 'pending')],
-            'status' => ['required', 'in:completed,failed,refunded,processing,pending'],
-            'password' => ['required', 'in:36351231-e783-4462-ac13-2c1f2d5fca25']
-        ]);
-
-        $order = RazorpayOrder::where('order_id', $input['order_id'])->first();
-
-        $order->update(['status' => $input['status']]);
-
-        $callback = RazorpayCallbackUrl::where('order_id', $order->id)
-            ->where('user_id', $order->user_id)
-            ->where('tnx_id', $order->tnx_id)
-            ->first();
-
-        $callback_url = $callback->callback_url;
-
-        $sendData = [
-            'order_id' => $order->order_id,
-            'tnx_id' => $order->tnx_id,
-            'amount' => $order->amount,
-            'status' => $input['status']
-        ];
-
-        $this->webhook($callback_url, $sendData);
-
-        return redirect()
-            ->back()
-            ->with('success', 'Payment updated successfully');
+        return redirect()->route('redirect');
     }
 }

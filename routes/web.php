@@ -15,10 +15,28 @@ use App\Http\Controllers\{
 use Illuminate\Support\Facades\Route;
 
 
-Route::prefix('sandbox')->group(function () {
+Route::prefix('{env?}')->group(function () {
     Route::get('token', [TransactionController::class, 'getToken'])->middleware('token');
     Route::post('request', [TransactionController::class, 'request'])->middleware(['throttle:600,10', 'auth', 'signature']);
+    Route::post('status', [TransactionController::class, 'status'])->middleware(['throttle:600,10', 'auth']);
+    Route::get('redirect', [TransactionController::class, 'redirect'])->middleware(['throttle:60,1']);
+    Route::get('payment/verify', [TransactionController::class, 'verifyPayment']);
+    Route::post('payment/update', [TransactionController::class, 'paymentUpdate']);
+})->where('env', 'sandbox');
+
+Route::prefix('razorpay')->group(function () {
+    Route::post('get/order-id', [RazorpayController::class, 'getOrderId']);
+    Route::get('checkout/order-pay/{id}', [RazorpayController::class, 'orderPay']);
+    Route::post('callback', [RazorpayController::class, 'callback'])->middleware(['throttle:60,1']);
 });
+
+Route::prefix('razorpay/sandbox')->group(function () {
+    Route::post('get/order-id', [RazorpaySandboxController::class, 'getOrderId']);
+    Route::get('checkout/order-pay/{id}', [RazorpaySandboxController::class, 'orderPay']);
+    Route::post('callback', [RazorpaySandboxController::class, 'callback'])->middleware(['throttle:60,1']);
+});
+
+// ======================================================
 
 
 Route::prefix('sabpaisa')->group(function () {
@@ -34,45 +52,6 @@ Route::prefix('sabpaisa')->group(function () {
         Route::any('webhook', [SabpaisaController::class, 'webhook']);
     });
 });
-
-
-Route::prefix('razorpay')->group(function () {
-    Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
-    Route::post('get/order-id', [RazorpayController::class, 'getOrderId']);
-    Route::post('request', [RazorpayController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-    Route::get('checkout/order-pay/{id}', [RazorpayController::class, 'orderPay']);
-    Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
-    Route::post('callback', [RazorpayController::class, 'callback'])->middleware(['throttle:60,1']);
-    Route::post('webhook', [RazorpayController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
-    Route::get('payment/verify', [RazorpayController::class, 'verifyPayment']);
-    Route::post('payment/update', [RazorpayController::class, 'paymentUpdate']);
-});
-
-Route::prefix('razorpay/sandbox')->group(function () {
-    Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
-    Route::post('get/order-id', [RazorpaySandboxController::class, 'getOrderId']);
-    Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-    Route::get('checkout/order-pay/{id}', [RazorpaySandboxController::class, 'orderPay']);
-    Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay']);
-    Route::post('callback', [RazorpaySandboxController::class, 'callback'])->middleware(['throttle:60,1']);
-    Route::post('webhook', [RazorpaySandboxController::class, 'webhook'])->middleware(['throttle:30,1', 'razorpay.webhook']);
-});
-
-// Route::prefix('razorpay')->group(function () {
-//     Route::post('token', [RazorpayController::class, 'token'])->middleware('razorpay');
-//     Route::post('request', [RazorpayController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-//     Route::post('status', [RazorpayController::class, 'status'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-//     Route::match(['get', 'post'], 'callback', [RazorpayController::class, 'callback']);
-//     Route::match(['get', 'post'], 'webhook', [RazorpayController::class, 'webhook']);
-
-//     Route::prefix('sandbox')->group(function () {
-//         Route::post('token', [RazorpaySandboxController::class, 'token'])->middleware('razorpay');
-//         Route::post('request', [RazorpaySandboxController::class, 'request'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-//         Route::post('status', [RazorpaySandboxController::class, 'status'])->middleware(['throttle:600,10', 'razorpay', 'razorpay.sign']);
-//         Route::match(['get', 'post'], 'callback', [RazorpaySandboxController::class, 'callback']);
-//         Route::match(['get', 'post'], 'webhook', [RazorpaySandboxController::class, 'webhook']);
-//     });
-// });
 
 Route::prefix('phonepe')->group(function () {
     Route::post('token', [PhonepeController::class, 'token'])->middleware('phonepe');
@@ -131,7 +110,6 @@ Route::prefix('paytm')->group(function () {
 //         'status' => 'success'
 //     ]);
 // });
-
 
 // Route::get('generate-sign', function () {
 
