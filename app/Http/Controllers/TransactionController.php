@@ -43,7 +43,7 @@ class TransactionController extends Controller
                         ->where('env', $env);
                 }),
             ],
-            'amount' => ['required', 'numeric', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:1000'],
             'payer_name' => ['required', 'string', 'max:255'],
             'payer_email' => ['required', 'email', 'max:255'],
             'payer_mobile' => ['required', 'digits:10'],
@@ -61,7 +61,7 @@ class TransactionController extends Controller
 
         $input = $validator->validated();
 
-        $gateway = $user['default_gateway'] ?? array_rand(['razorpay']);
+        $gateway = $user['default_gateway'] ?? getPaymentGateway($input['amount']);
 
         $tnx = Transaction::create([
             'user_id' => $user['id'],
